@@ -119,8 +119,8 @@ export async function generateConsultantReport(full: FullAudit): Promise<{ repor
     if (err instanceof AiUnavailableError) throw err;
     if (err instanceof Anthropic.AuthenticationError) throw new AiUnavailableError("The Anthropic API key was rejected. Check ANTHROPIC_API_KEY.");
     if (err instanceof Anthropic.RateLimitError) throw new AiUnavailableError("The Anthropic API rate limit was reached. Try again in a minute.");
-    if (err instanceof Anthropic.BadRequestError) throw new AiUnavailableError(`The AI request was rejected: ${err.message}`);
-    if (err instanceof Anthropic.APIError) throw new AiUnavailableError(`The AI service returned an error (${err.status ?? "network"}): ${err.message}`);
-    throw new AiUnavailableError(`The AI service could not be reached: ${(err as Error).message}`);
+    if (err instanceof Anthropic.BadRequestError) throw new AiUnavailableError("The AI request was rejected. Check the configured model and request limits.");
+    if (err instanceof Anthropic.APIError) throw new AiUnavailableError(`The AI service returned an error (${err.status ?? "network"}). Try again later.`);
+    throw new AiUnavailableError("The AI service could not be reached. Try again later.");
   }
 }

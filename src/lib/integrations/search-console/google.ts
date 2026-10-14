@@ -48,12 +48,14 @@ export function buildAuthUrl(client: OAuthClient, state: string, codeChallenge: 
 }
 
 async function parseError(res: Response): Promise<GoogleApiError> {
-  const body = (await res.json().catch(() => ({}))) as { error?: string | { message?: string; status?: string }; error_description?: string };
-  if (typeof body.error === "string") {
-    return new GoogleApiError(body.error_description ?? body.error, res.status, body.error);
-  }
-  const message = body.error?.message ?? `Google API returned HTTP ${res.status}`;
-  return new GoogleApiError(message, res.status, body.error?.status);
+  const body = (await res.json().catch(() => ({}))) as { error?: string | { status?: string } };
+  const reason = typeof body.error === "string" ? body.error : body.error?.status;
+  // Provider responses can echo credentials or request details. Keep only known codes.
+  const safeReason = reason && ["invalid_grant", "invalid_client", "access_denied", "PERMISSION_DENIED", "RESOURCE_EXHAUSTED", "UNAUTHENTICATED"].includes(reason) ? reason : undefined;
+  const message = safeReason === "invalid_grant"
+    ? "Google access was revoked or expired. Reconnect Search Console."
+    : `Google API returned HTTP ${res.status}. Check credentials, permissions and quota.`;
+  return new GoogleApiError(message, res.status, safeReason);
 }
 
 export interface TokenResponse {
@@ -94,7 +96,7 @@ export async function refreshAccessToken(client: Omit<OAuthClient, "redirectUri"
 }
 
 export async function revokeToken(token: string): Promise<void> {
-  await fetch(`${REVOKE_URL}?token=${encodeURIComponent(token)}`, { method: "POST", signal: AbortSignal.timeout(10_000) }).catch(() => undefined);
+  await fetch(REVOKE_URL, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ token }), signal: AbortSignal.timeout(10_000) }).catch(() => undefined);
 }
 
 /**

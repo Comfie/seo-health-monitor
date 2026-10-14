@@ -140,7 +140,7 @@ export async function runPageSpeed(url: string, strategy: "mobile" | "desktop", 
       }
       return e.name === "TimeoutError"
         ? unavailable(`PageSpeed Insights did not respond within ${timeoutMs / 1000}s.`, "timeout")
-        : unavailable(`PageSpeed Insights request failed: ${e.message}`, "network");
+        : unavailable("PageSpeed Insights request failed. Try again later.", "network");
     }
     if (res.ok) return parsePsiResponse(url, strategy, (await res.json()) as PsiResponse);
 
@@ -161,10 +161,10 @@ export async function runPageSpeed(url: string, strategy: "mobile" | "desktop", 
     if (res.status === 400 || res.status === 403) {
       const message = json.error?.message ?? res.statusText;
       if (/api key|API_KEY|permission|not been used|disabled/i.test(message)) {
-        return unavailable(`PageSpeed Insights rejected the API key: ${message} Check PAGESPEED_API_KEY and that the PageSpeed Insights API is enabled for its project.`, "http");
+        return unavailable("PageSpeed Insights rejected the API key. Check PAGESPEED_API_KEY and that the PageSpeed Insights API is enabled for its project.", "http");
       }
-      return unavailable(`PageSpeed Insights couldn't test this page: ${message}`, "lighthouse");
+      return unavailable("PageSpeed Insights could not test this page (HTTP 400/403).", "lighthouse");
     }
-    return unavailable(`PageSpeed Insights returned HTTP ${res.status}: ${json.error?.message ?? res.statusText}`, "http");
+    return unavailable(`PageSpeed Insights returned HTTP ${res.status}.`, "http");
   }
 }
