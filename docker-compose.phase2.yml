@@ -1,0 +1,20 @@
+# Optional isolated LOCAL staging database. No production app/volume is referenced.
+# Set PHASE2_LOCAL_POSTGRES_PASSWORD in your shell before starting this file.
+services:
+  postgres:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_DB: seo_phase2_staging
+      POSTGRES_USER: seo_phase2_operator
+      POSTGRES_PASSWORD: ${PHASE2_LOCAL_POSTGRES_PASSWORD:?Set a random local database password}
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - phase2-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U seo_phase2_operator -d seo_phase2_staging"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+volumes:
+  phase2-postgres:

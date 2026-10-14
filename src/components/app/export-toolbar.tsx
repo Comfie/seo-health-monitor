@@ -4,8 +4,8 @@ import { Download, FileJson, FileSpreadsheet, FileText, Printer } from "lucide-r
 import { Button, buttonVariants } from "@/components/ui/button";
 import { CopyButton } from "./copy-button";
 
-export function ExportToolbar({ auditId, showPrint = false }: { auditId: number; showPrint?: boolean }) {
-  const href = (format: string) => `/api/audits/${auditId}/export?format=${format}`;
+export function ExportToolbar({ auditId, showPrint = false, baseHref = `/api/audits/${auditId}` }: { auditId: number; showPrint?: boolean; baseHref?: string }) {
+  const href = (format: string) => `${baseHref}/export?format=${format}`;
   return (
     <div className="no-print flex flex-wrap gap-2">
       <a href={href("pdf")} className={buttonVariants()}>

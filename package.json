@@ -15,11 +15,17 @@
     "audit:cli": "tsx --conditions=react-server scripts/audit-cli.ts",
     "db:backup": "node scripts/sqlite-backup.cjs backup",
     "db:restore": "node scripts/sqlite-backup.cjs restore",
-    "test:railway": "node scripts/test-railway.cjs"
+    "test:railway": "node scripts/test-railway.cjs",
+    "db:saas:generate": "drizzle-kit generate --config=drizzle.saas.config.ts",
+    "db:saas:staging": "tsx --conditions=react-server scripts/saas-staging.ts",
+    "worker:beta": "tsx --conditions=react-server scripts/beta-worker.ts",
+    "test:saas": "vitest run tests/saas.test.ts tests/saas-migration.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.133.0",
     "@base-ui/react": "^1.9.0",
+    "@better-auth/drizzle-adapter": "^1.7.7",
+    "better-auth": "^1.7.7",
     "better-sqlite3": "^13.0.3",
     "cheerio": "^1.2.0",
     "class-variance-authority": "^0.7.1",
@@ -31,6 +37,7 @@
     "next": "16.4.0",
     "next-themes": "^0.4.6",
     "pdfkit": "^0.20.2",
+    "pg": "^8.23.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-markdown": "^10.1.0",
@@ -44,10 +51,12 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.10",
     "@tailwindcss/turbopack": "^4",
     "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^22.20.5",
     "@types/pdfkit": "^0.17.6",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "drizzle-kit": "^0.31.11",

@@ -1,5 +1,7 @@
 # SEO Health Monitor
 
+Phase 2 development: see the [implementation ledger and migration plan](docs/phase2/README.md). The multi-user foundation is isolated from the existing single-owner runtime; customer access is not enabled.
+
 A self-hosted SEO monitoring app. It audits any public website, with up to 25 pages and 50+ explicit checks across technical SEO, on-page SEO, performance, local SEO and conversion readiness. Every finding is tied to a URL and the evidence collected. It tracks real Google search performance through Search Console and shows whether things improve between audits.
 
 Nothing is mocked. Findings come from real HTTP responses, HTML, robots.txt, sitemaps, Google PageSpeed Insights and Google Search Console. Anything that can't be measured is shown as **not verified**: it's excluded from scores, and the score is labelled **provisional** when important parts are missing.

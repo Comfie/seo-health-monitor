@@ -6,20 +6,13 @@ import { runPerformanceJobs } from "@/lib/performance/run";
 import { runChecks } from "./checks";
 import { performanceChecks } from "./checks/performance";
 import { getFullAudit } from "./repository";
-import { selectPerformancePages } from "./runner";
+import { inlinksFrom, selectPerformancePages } from "./pipeline";
 import { computeCounts, computeScores } from "./scoring";
-import type { AuditContext, CrawlResult, PageData } from "./types";
+import type { AuditContext, CrawlResult } from "./types";
 
 const inFlight = ((globalThis as unknown as { __perfRerun?: Set<number> }).__perfRerun ??= new Set<number>());
 
 export class RerunError extends Error {}
-
-/** Rebuilds the inbound-link map from stored pages so page selection matches the original audit. */
-function inlinksFrom(pages: PageData[]): Record<string, string[]> {
-  const map: Record<string, string[]> = {};
-  for (const p of pages) for (const l of p.extracted?.links ?? []) if (l.internal) (map[l.href] ??= []).push(p.finalUrl);
-  return map;
-}
 
 /**
  * Re-runs only PageSpeed Insights for a completed audit (e.g. after a quota

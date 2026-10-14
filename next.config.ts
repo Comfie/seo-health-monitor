@@ -35,11 +35,15 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   output: "standalone",
   poweredByHeader: false,
-  serverExternalPackages: ["better-sqlite3", "pdfkit"],
+  serverExternalPackages: ["better-sqlite3", "pdfkit", "pg"],
   // Migrations are read from disk at runtime; include them in the standalone trace.
   outputFileTracingIncludes: { "/**": ["./drizzle/**/*"] },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      // Invitation and reset tokens appear in beta URLs; never leak them via Referer.
+      { source: "/beta/:path*", headers: [{ key: "Referrer-Policy", value: "no-referrer" }] },
+    ];
   },
   turbopack: {
     rules: {
