@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { BRAND_ICON as Brand, NAV_GROUPS } from "./nav";
+import { BrandFooter } from "./brand-footer";
 
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
@@ -98,6 +99,7 @@ export function AppShell({ children, signOut }: { children: React.ReactNode; sig
           <span className="font-heading font-semibold text-white">SEO Health Monitor</span>
         </header>
         <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-10">{children}</main>
+        <BrandFooter />
       </div>
     </div>
   );
