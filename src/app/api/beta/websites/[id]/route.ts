@@ -5,7 +5,7 @@ import { betaJson, denied, withCustomer } from "@/lib/saas/server";
 type Context = { params: Promise<{ id: string }> };
 
 // Strict positive integer; "1 OR 1=1", "1e3", "-1" and other forms are a plain 404.
-const parseId = (raw: string) => (/^[1-9]\d{0,9}$/.test(raw) ? Number(raw) : null);
+const parseId = (raw: string) => (/^[1-9]\d{0,9}$/.test(raw) && Number(raw) <= 2_147_483_647 ? Number(raw) : null);
 const rename = z.object({ displayName: z.string().max(200) });
 
 export async function GET(request: Request, { params }: Context) {

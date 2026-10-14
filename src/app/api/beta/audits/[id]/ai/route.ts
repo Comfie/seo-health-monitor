@@ -9,11 +9,13 @@ export async function POST(request: Request, context: IdContext) {
   return withCustomer(request, async ({ runtime, tenant }) => {
     const id = await auditId(context);
     if (!id) return denied();
-    // Refuse before any budget is reserved when the provider is not configured.
-    if (!isAiConfigured()) return betaJson(503, { error: "The AI consultant is not enabled for the beta." });
-    const limited = await throttle(runtime, tenant, "ai", 5, 60 * 60_000);
-    if (limited) return limited;
     try {
+      // Check ownership before provider availability or throttling, so foreign IDs
+      // always receive the same denial as missing IDs, including when AI is disabled.
+      await auditsFor(runtime, tenant).status(id);
+      if (!isAiConfigured()) return betaJson(503, { error: "The AI consultant is not enabled for the beta." });
+      const limited = await throttle(runtime, tenant, "ai", 5, 60 * 60_000);
+      if (limited) return limited;
       const regenerate = new URL(request.url).searchParams.get("regenerate") === "1";
       return betaJson(200, await auditsFor(runtime, tenant).consultantReport(id, generateConsultantReport, { regenerate }));
     } catch (error) {

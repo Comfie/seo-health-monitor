@@ -25,4 +25,13 @@ The baseline source is preserved on `phase2-multiuser` after a staged secret sca
 
 ## Results
 
-Pending execution. Unexecuted checks must remain unverified.
+Source baseline `0d181a3` passed 209 local tests, type checking and lint. Its clean Git export was deployed to beta web `4c49f3db-58cc-45f9-b519-9bfc93b4e870` and worker `f81d0ce7-8c2f-4a65-a42f-a5bc05bf3eb7`.
+
+G4 was enabled only on the beta web service. The two approved invitations were accepted by Resend, both synthetic registrations returned 200, public sign-up returned 404, and attempted role/verification field injection left both accounts unverified and without administrator roles. Real email verification is pending the owner's clicks; no account is verified through a database override.
+
+Two additional regression checks exposed baseline defects before the hosted isolation matrix:
+
+- Website IDs above PostgreSQL's signed integer maximum reached the database and caused errors. All three website methods now reject these IDs with 404 before querying.
+- With the optional AI provider disabled, foreign AI-report IDs returned 503 before ownership was checked. Ownership is now checked first, preserving the uniform 404 boundary while owned requests still report the unavailable provider without spending quota.
+
+Both checks failed against the baseline before the fixes. Retest and hosted results will be added below. Unexecuted checks remain unverified.

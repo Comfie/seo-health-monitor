@@ -265,6 +265,28 @@ describe("customer audit API", () => {
     expect(await db.select().from(saasSchema.usageRecords).where(eq(saasSchema.usageRecords.kind, "ai"))).toHaveLength(before.length);
   });
 
+  it("denies foreign AI reports before checking provider availability", async () => {
+    const missing = 2_000_000;
+    for (const [cookie, foreignId] of [[alice, b1], [bob, a1], [admin, a1]] as const) {
+      const foreign = await post(aiRoute.POST, `/api/beta/audits/${foreignId}/ai`, cookie, idParams(foreignId));
+      const absent = await post(aiRoute.POST, `/api/beta/audits/${missing}/ai`, cookie, idParams(missing));
+      expect(foreign.status).toBe(404);
+      expect(foreign.text).toBe(absent.text);
+    }
+  });
+
+  it("rejects website IDs outside the PostgreSQL integer range for every method", async () => {
+    for (const id of ["2147483648", "9999999999"]) {
+      for (const method of ["GET", "PATCH", "DELETE"] as const) {
+        const response = await call(websiteRoute[method] as Handler, method, `/api/beta/websites/${id}`, {
+          cookie: alice, params: idParams(id), ...(method === "PATCH" ? { body: { displayName: "Overflow probe" } } : {}),
+        });
+        expect(response.status).toBe(404);
+        expect(response.text).not.toMatch(/SQL|integer|overflow|Alice|example\.com/);
+      }
+    }
+  });
+
   it("cancels only the customer's own active audit", async () => {
     const queued = (await start(alice, aliceSite)).data.audit.id;
     expect((await post(cancelRoute.POST, `/api/beta/audits/${queued}/cancel`, bob, idParams(queued))).status).toBe(404);
