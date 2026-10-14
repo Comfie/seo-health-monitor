@@ -1,0 +1,161 @@
+{
+  "sourceRevision": "d31e13030c4cc76a1229ce6c8b3dea0e0ae3b714",
+  "scope": "controlled internal G4; account verification pending",
+  "checks": [
+    {
+      "name": "G4 operator access",
+      "passed": true,
+      "utc": "2026-10-14T22:18:06.038644+00:00",
+      "status": "passed",
+      "invitationsEnabled": true
+    },
+    {
+      "name": "A real invitation accepted by Resend",
+      "passed": true,
+      "utc": "2026-10-14T22:18:08.708681+00:00",
+      "status": "passed",
+      "emailAccepted": true
+    },
+    {
+      "name": "A registration",
+      "passed": true,
+      "utc": "2026-10-14T22:18:10.749382+00:00",
+      "status": "passed"
+    },
+    {
+      "name": "A public signup blocked",
+      "passed": true,
+      "utc": "2026-10-14T22:18:10.998408+00:00",
+      "status": "passed"
+    },
+    {
+      "name": "A verification required despite manipulated registration fields",
+      "passed": true,
+      "utc": "2026-10-14T22:18:14.877348+00:00",
+      "emailVerified": false,
+      "status": "passed"
+    },
+    {
+      "name": "B real invitation accepted by Resend",
+      "passed": true,
+      "utc": "2026-10-14T22:18:17.442442+00:00",
+      "status": "passed",
+      "emailAccepted": true
+    },
+    {
+      "name": "B registration",
+      "passed": true,
+      "utc": "2026-10-14T22:18:19.581551+00:00",
+      "status": "passed"
+    },
+    {
+      "name": "B public signup blocked",
+      "passed": true,
+      "utc": "2026-10-14T22:18:19.875313+00:00",
+      "status": "passed"
+    },
+    {
+      "name": "B verification required despite manipulated registration fields",
+      "passed": true,
+      "utc": "2026-10-14T22:18:21.718223+00:00",
+      "emailVerified": false,
+      "status": "passed"
+    },
+    {
+      "name": "A real email verification and no role escalation",
+      "passed": null,
+      "utc": "2026-10-14T22:20:15.403815+00:00",
+      "email_verified": false,
+      "admin_rows": 0,
+      "tenants": 0,
+      "consumed": 0,
+      "status": "pending"
+    },
+    {
+      "name": "B real email verification and no role escalation",
+      "passed": null,
+      "utc": "2026-10-14T22:20:17.227386+00:00",
+      "email_verified": false,
+      "admin_rows": 0,
+      "tenants": 0,
+      "consumed": 0,
+      "status": "pending"
+    },
+    {
+      "name": "Only operator and two approved invitations exist",
+      "passed": true,
+      "utc": "2026-10-14T22:30:03.847550+00:00",
+      "status": "passed",
+      "count": 3
+    },
+    {
+      "name": "Anonymous GET /api/beta/admin/invitations denied",
+      "passed": true,
+      "utc": "2026-10-14T22:30:04.055670+00:00",
+      "status": "passed"
+    },
+    {
+      "name": "Anonymous POST /api/beta/admin/invitations denied",
+      "passed": true,
+      "utc": "2026-10-14T22:30:04.246324+00:00",
+      "status": "passed"
+    },
+    {
+      "name": "Anonymous GET /api/beta/websites denied",
+      "passed": true,
+      "utc": "2026-10-14T22:30:04.542232+00:00",
+      "status": "passed"
+    },
+    {
+      "name": "Anonymous GET /api/beta/audits denied",
+      "passed": true,
+      "utc": "2026-10-14T22:30:04.736543+00:00",
+      "status": "passed"
+    },
+    {
+      "name": "Anonymous GET /api/beta/auth/get-session denied",
+      "passed": true,
+      "utc": "2026-10-14T22:30:05.063486+00:00",
+      "status": "passed"
+    },
+    {
+      "name": "Anonymous POST /api/beta/auth/sign-up/email denied",
+      "passed": true,
+      "utc": "2026-10-14T22:30:05.294414+00:00",
+      "status": "passed"
+    },
+    {
+      "name": "Anonymous POST /api/beta/register denied",
+      "passed": true,
+      "utc": "2026-10-14T22:30:05.902612+00:00",
+      "status": "passed"
+    },
+    {
+      "name": "Administrator cross-origin invitation blocked https://evil.example",
+      "passed": true,
+      "utc": "2026-10-14T22:30:06.115013+00:00",
+      "status": "passed"
+    },
+    {
+      "name": "Administrator cross-origin invitation blocked null",
+      "passed": true,
+      "utc": "2026-10-14T22:30:06.285658+00:00",
+      "status": "passed"
+    },
+    {
+      "name": "Beta registration and resource controls preserved",
+      "passed": true,
+      "utc": "2026-10-14T22:30:10.189194+00:00",
+      "exactAllowlist": true,
+      "pageCap": "5",
+      "dailyPageSpeedCap": "40",
+      "status": "passed"
+    },
+    {
+      "name": "Phase 1 has no beta configuration",
+      "passed": true,
+      "utc": "2026-10-14T22:30:10.191628+00:00",
+      "status": "passed"
+    }
+  ]
+}

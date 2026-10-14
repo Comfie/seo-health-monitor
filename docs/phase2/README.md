@@ -4,6 +4,8 @@ Updated 15 October 2026 (Africa/Johannesburg). Stages 1 (foundation), 2 (custome
 
 ## Stage 4A: Railway staging preparation (in progress)
 
+**Current internal test run (15 October 2026):** G4 is now approved for the two synthetic plus-address accounts only. Source baseline `0d181a3` and beta fixes `d31e130` are committed on `phase2-multiuser`, with no push or production merge. G4 is enabled only on the beta service; the original operator-only status below is historical. Current evidence and limitations: [controlled internal test report](hosted-g4-test-report.md).
+
 Started 14 October 2026 on `phase2-multiuser`, with operator verification completed 15 October 2026 local time. Code is still uncommitted; nothing was pushed. The only invitation is the approved offline operator bootstrap; no tester invitation was issued.
 
 **Railway (approved by the owner, 14 October 2026):** the project keeps its single `production` environment by the owner's decision, so the beta runs beside Phase 1 as two new services, `seo-beta-web` (`a704af9c…`, domain `seo-beta-web-production.up.railway.app`, new volume at `/data`) and `seo-beta-worker` (`c84c9305…`). Neither has a repository source, so neither can auto-deploy. Settings were applied per service through the API, variables were set with secrets piped via stdin, and the database is reached over the private network. Both are **deployed** (see below).

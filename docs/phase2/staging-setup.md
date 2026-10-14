@@ -1,6 +1,6 @@
 # Railway beta setup (customer beta, Stage 4A)
 
-**Status (15 October 2026, Africa/Johannesburg):** the beta services are **deployed and healthy** (web `6922066f…`, worker `61ac836d…`). Operator registration, delivered Resend verification, login, cookies, restart/redeploy persistence, logout and administrator access protection are recorded in [the ledger](README.md#operator-bootstrap-and-verification-15-october-2026-local-time). The full-access email key has been replaced by a domain-restricted sending-only key and revoked. **G4 remains unapproved and invitations remain disabled**. The wider §7 authentication checklist and §8 customer/worker tests stay unverified until separately recorded with deployment and artifact provenance.
+**Status (15 October 2026, Africa/Johannesburg):** G4 is approved for controlled internal testing of the two previously approved Gmail plus-addresses. Invitations are enabled **only on the beta web service**, with invite-only registration and the exact email allowlist unchanged. Tested source is preserved in Git; current beta web `b83ab02c…` and worker `86f20b68…` use revision `d31e130`. Execution and results are recorded in [the internal test report](hosted-g4-test-report.md). Operator verification is recorded in [the ledger](README.md#operator-bootstrap-and-verification-15-october-2026-local-time). The full-access email key was replaced and revoked. No external beta is approved; unexecuted authentication/customer/worker scenarios remain unverified.
 
 ## Layout: one Railway environment, by decision
 
@@ -90,7 +90,7 @@ Secrets were generated locally and piped with `railway variable set NAME --stdin
 | `PHASE2_AUTH_SECRET`, `APP_SECRET` | New random, 64 hex characters | `config.ts`, `security/crypto.ts` |
 | `AUTH_PASSWORD` | New random owner password (not Phase 1's). Readable in the dashboard if ever needed. | `security/auth.ts`, `security/railway.ts` |
 | `PHASE2_REGISTRATION` | `invite-only` | `config.ts` |
-| `PHASE2_INVITATIONS_ENABLED` | `false` (until G4) | `config.ts` |
+| `PHASE2_INVITATIONS_ENABLED` | `true` on beta web following controlled G4 approval (15 October 2026) | `config.ts` |
 | `PHASE2_INVITATION_TTL_HOURS` | `72` | `config.ts` |
 | `EMAIL_TRANSPORT` | `resend` | `config.ts` |
 | `EMAIL_RECIPIENT_ALLOWLIST` | Exactly three addresses: the owner's Gmail address and its `+beta-a` and `+beta-b` plus-addresses. Never leave it empty: an empty allowlist allows **every** recipient. | `email.ts` |
