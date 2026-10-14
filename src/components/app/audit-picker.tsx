@@ -29,7 +29,3 @@ export function AuditPicker({ audits, current }: { audits: PickerAudit[]; curren
     </label>
   );
 }
-
-export function toPickerAudits(rows: { id: number; host: string; completedAt: Date | null; overallScore: number | null }[]): PickerAudit[] {
-  return rows.map((r) => ({ id: r.id, host: r.host, completedAt: r.completedAt ? r.completedAt.toISOString() : null, overallScore: r.overallScore }));
-}

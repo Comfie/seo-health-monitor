@@ -25,6 +25,31 @@ const FORM_PROVIDERS: [string, RegExp][] = [
 ];
 const SPA_ROOTS = "#root, #__next, #app, #___gatsby, #__nuxt, #svelte, [data-reactroot], app-root, [ng-version]";
 
+const PLATFORMS: { name: string; test: (html: string, generator: string) => string | null }[] = [
+  { name: "WordPress", test: (h, g) => (/wordpress/i.test(g) ? `generator: ${g}` : /\/wp-content\/|\/wp-includes\//.test(h) ? "/wp-content/ assets" : null) },
+  { name: "Shopify", test: (h) => (/cdn\.shopify\.com|Shopify\.theme/.test(h) ? "cdn.shopify.com assets" : null) },
+  { name: "Wix", test: (h, g) => (/wix/i.test(g) ? `generator: ${g}` : /static\.wixstatic\.com/.test(h) ? "wixstatic.com assets" : null) },
+  { name: "Squarespace", test: (h) => (/static1\.squarespace\.com|Squarespace/.test(h) ? "squarespace assets" : null) },
+  { name: "Webflow", test: (h, g) => (/webflow/i.test(g) ? `generator: ${g}` : /data-wf-site/.test(h) ? "data-wf-site attribute" : null) },
+  { name: "Next.js", test: (h, g) => (/next\.js/i.test(g) ? `generator: ${g}` : /\/_next\/static\/|__NEXT_DATA__/.test(h) ? "/_next/static assets" : null) },
+  { name: "Nuxt", test: (h) => (/__NUXT__|\/_nuxt\//.test(h) ? "/_nuxt assets" : null) },
+  { name: "Astro", test: (h, g) => (/astro/i.test(g) ? `generator: ${g}` : /<astro-island|\/_astro\//.test(h) ? "/_astro assets" : null) },
+  { name: "Gatsby", test: (h, g) => (/gatsby/i.test(g) ? `generator: ${g}` : /id="___gatsby"/.test(h) ? "___gatsby root" : null) },
+  { name: "Drupal", test: (h, g) => (/drupal/i.test(g) ? `generator: ${g}` : /\/sites\/default\/files\//.test(h) ? "/sites/default/files assets" : null) },
+  { name: "Joomla", test: (h, g) => (/joomla/i.test(g) ? `generator: ${g}` : null) },
+  { name: "Hugo", test: (_h, g) => (/hugo/i.test(g) ? `generator: ${g}` : null) },
+  { name: "Jekyll", test: (_h, g) => (/jekyll/i.test(g) ? `generator: ${g}` : null) },
+];
+
+/** Identifies common CMSs/frameworks from markup signals; null when nothing conclusive. */
+export function detectPlatform(html: string, generator: string): { name: string; evidence: string } | null {
+  for (const p of PLATFORMS) {
+    const evidence = p.test(html, generator);
+    if (evidence) return { name: p.name, evidence };
+  }
+  return null;
+}
+
 function clean(text: string): string {
   return text.replace(/\s+/g, " ").trim();
 }
@@ -323,5 +348,6 @@ export function extractPage(html: string, pageUrl: string, siteHost: string): Ex
     hreflang,
     jsRendering: { suspected: reasons.length > 0, reasons },
     scriptCount,
+    platform: detectPlatform(html, $('meta[name="generator" i]').attr("content") ?? ""),
   };
 }

@@ -53,10 +53,10 @@ function hasField(exp: LoadingExperience | undefined): exp is LoadingExperience 
 export function parsePsiResponse(url: string, strategy: "mobile" | "desktop", json: PsiResponse): PerformanceResult {
   const lh = json.lighthouseResult;
   if (!lh?.audits) {
-    return { url, strategy, status: "unavailable", error: json.error?.message ?? "PageSpeed returned no Lighthouse result.", opportunities: [] };
+    return { url, strategy, status: "unavailable", error: json.error?.message ?? "PageSpeed returned no Lighthouse result.", errorCode: "lighthouse", opportunities: [] };
   }
   if (lh.runtimeError?.code && lh.runtimeError.code !== "NO_ERROR") {
-    return { url, strategy, status: "unavailable", error: `Lighthouse error: ${lh.runtimeError.message ?? lh.runtimeError.code}`, opportunities: [] };
+    return { url, strategy, status: "unavailable", error: `Lighthouse error: ${lh.runtimeError.message ?? lh.runtimeError.code}`, errorCode: "lighthouse", opportunities: [] };
   }
   const audits = lh.audits;
   const num = (id: string) => (typeof audits[id]?.numericValue === "number" ? audits[id].numericValue! : null);
@@ -102,28 +102,69 @@ export function parsePsiResponse(url: string, strategy: "mobile" | "desktop", js
   };
 }
 
-export async function runPageSpeed(
-  url: string,
-  strategy: "mobile" | "desktop",
-  apiKey: string | undefined,
-  timeoutMs: number,
-): Promise<PerformanceResult> {
+export interface PageSpeedOptions {
+  apiKey?: string;
+  timeoutMs: number;
+  /** Retries for 429/5xx/timeouts, with exponential backoff (honours Retry-After). */
+  retries?: number;
+  sleep?: (ms: number) => Promise<void>;
+}
+
+const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+function retryAfterMs(res: Response, attempt: number): number {
+  const header = Number(res.headers.get("retry-after"));
+  const fromHeader = Number.isFinite(header) && header > 0 ? header * 1000 : 0;
+  return Math.min(30_000, Math.max(fromHeader, 2_000 * 2 ** attempt));
+}
+
+/**
+ * Runs one PageSpeed Insights test. The API key travels in the X-Goog-Api-Key
+ * header (never the URL) so it can't leak into logs or stored error messages.
+ * Never throws: failures come back as status "unavailable" with an errorCode.
+ */
+export async function runPageSpeed(url: string, strategy: "mobile" | "desktop", options: PageSpeedOptions): Promise<PerformanceResult> {
+  const { apiKey, timeoutMs, retries = 2, sleep = defaultSleep } = options;
   const params = new URLSearchParams({ url, strategy, category: "performance" });
-  if (apiKey) params.set("key", apiKey);
-  try {
-    const res = await fetch(`${ENDPOINT}?${params}`, { signal: AbortSignal.timeout(timeoutMs) });
-    const json = (await res.json().catch(() => ({}))) as PsiResponse;
-    if (!res.ok) {
-      const reason =
-        res.status === 429
-          ? "PageSpeed Insights quota exceeded (HTTP 429). Add a PAGESPEED_API_KEY to get a dedicated quota."
-          : `PageSpeed Insights returned HTTP ${res.status}: ${json.error?.message ?? res.statusText}`;
-      return { url, strategy, status: "unavailable", error: reason, opportunities: [] };
+  const unavailable = (error: string, errorCode: PerformanceResult["errorCode"]): PerformanceResult => ({ url, strategy, status: "unavailable", error, errorCode, opportunities: [] });
+
+  for (let attempt = 0; ; attempt++) {
+    let res: Response;
+    try {
+      res = await fetch(`${ENDPOINT}?${params}`, { headers: apiKey ? { "x-goog-api-key": apiKey } : {}, signal: AbortSignal.timeout(timeoutMs) });
+    } catch (err) {
+      const e = err as Error;
+      if (attempt < retries) {
+        await sleep(2_000 * 2 ** attempt);
+        continue;
+      }
+      return e.name === "TimeoutError"
+        ? unavailable(`PageSpeed Insights did not respond within ${timeoutMs / 1000}s.`, "timeout")
+        : unavailable(`PageSpeed Insights request failed: ${e.message}`, "network");
     }
-    return parsePsiResponse(url, strategy, json);
-  } catch (err) {
-    const e = err as Error;
-    const message = e.name === "TimeoutError" ? `PageSpeed Insights did not respond within ${timeoutMs / 1000}s.` : `PageSpeed Insights request failed: ${e.message}`;
-    return { url, strategy, status: "unavailable", error: message, opportunities: [] };
+    if (res.ok) return parsePsiResponse(url, strategy, (await res.json()) as PsiResponse);
+
+    const json = (await res.json().catch(() => ({}))) as PsiResponse;
+    const transient = res.status === 429 || res.status >= 500;
+    if (transient && attempt < retries) {
+      await sleep(retryAfterMs(res, attempt));
+      continue;
+    }
+    if (res.status === 429) {
+      return unavailable(
+        apiKey
+          ? "PageSpeed Insights quota exceeded for this API key (HTTP 429). Quota resets daily; try again later or raise the quota in Google Cloud."
+          : "PageSpeed Insights quota exceeded (HTTP 429). Anonymous use has a tiny shared quota; add PAGESPEED_API_KEY.",
+        "quota",
+      );
+    }
+    if (res.status === 400 || res.status === 403) {
+      const message = json.error?.message ?? res.statusText;
+      if (/api key|API_KEY|permission|not been used|disabled/i.test(message)) {
+        return unavailable(`PageSpeed Insights rejected the API key: ${message} Check PAGESPEED_API_KEY and that the PageSpeed Insights API is enabled for its project.`, "http");
+      }
+      return unavailable(`PageSpeed Insights couldn't test this page: ${message}`, "lighthouse");
+    }
+    return unavailable(`PageSpeed Insights returned HTTP ${res.status}: ${json.error?.message ?? res.statusText}`, "http");
   }
 }

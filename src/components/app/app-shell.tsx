@@ -65,15 +65,18 @@ function BrandMark() {
   );
 }
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({ children, signOut }: { children: React.ReactNode; signOut?: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="flex min-h-screen">
-      <aside className="no-print sticky top-0 hidden h-screen w-60 shrink-0 flex-col gap-8 overflow-y-auto bg-sidebar px-3 py-5 lg:flex">
-        <BrandMark />
-        <Suspense>
-          <NavLinks />
-        </Suspense>
+      <aside className="no-print hidden w-60 shrink-0 bg-sidebar lg:block">
+        <div className="sticky top-0 flex h-screen flex-col gap-8 overflow-y-auto px-3 py-5">
+          <BrandMark />
+          <Suspense>
+            <NavLinks />
+          </Suspense>
+          {signOut}
+        </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="no-print sticky top-0 z-30 flex items-center gap-3 border-b bg-sidebar px-4 py-3 lg:hidden">
@@ -88,6 +91,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Suspense>
                   <NavLinks onNavigate={() => setOpen(false)} />
                 </Suspense>
+                {signOut}
               </div>
             </SheetContent>
           </Sheet>

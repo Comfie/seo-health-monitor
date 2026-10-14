@@ -1,6 +1,7 @@
 import type { AuditView } from "@/lib/audit/views";
 import type { Category } from "@/lib/audit/types";
-import { AuditPicker, toPickerAudits } from "./audit-picker";
+import { AuditPicker } from "./audit-picker";
+import { toPickerAudits } from "./picker-data";
 import { PageHeader } from "./page-header";
 import { TONE_COLOR, formatDate, scoreTone } from "./format";
 

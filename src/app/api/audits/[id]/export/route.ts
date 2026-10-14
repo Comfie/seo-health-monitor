@@ -1,3 +1,4 @@
+import { guard } from "@/lib/security/guard";
 import { NextResponse, connection } from "next/server";
 import { getFullAudit } from "@/lib/audit/repository";
 import { auditToJson, issuesToCsv } from "@/lib/reports/export";
@@ -5,6 +6,8 @@ import { buildDeveloperTasks } from "@/lib/reports/action-plan";
 import { renderAuditPdf } from "@/lib/reports/pdf";
 
 export async function GET(request: Request, ctx: RouteContext<"/api/audits/[id]/export">) {
+  const denied = guard(request);
+  if (denied) return denied;
   await connection();
   const id = Number.parseInt((await ctx.params).id, 10);
   const full = Number.isFinite(id) ? getFullAudit(id) : null;

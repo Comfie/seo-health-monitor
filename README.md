@@ -1,96 +1,89 @@
 # SEO Health Monitor
 
-A self-hosted SEO auditing app. Enter any public website and it crawls up to 25 pages, runs over 50 explicit checks across technical SEO, on-page SEO, performance, local SEO and conversion readiness, then produces evidence-based findings tied to specific URLs, a prioritised action plan, developer fix instructions and exports. Every scan is stored so you can compare scans over time.
+A self-hosted SEO monitoring app. It audits any public website, with up to 25 pages and 50+ explicit checks across technical SEO, on-page SEO, performance, local SEO and conversion readiness. Every finding is tied to a URL and the evidence collected. It tracks real Google search performance through Search Console and shows whether things improve between audits.
 
-Nothing is mocked. Every finding comes from real HTTP responses, real HTML, real robots.txt and sitemaps, and real Google PageSpeed Insights results. Anything that can't be measured is shown as **not verified** and excluded from the scores.
+Nothing is mocked. Findings come from real HTTP responses, HTML, robots.txt, sitemaps, Google PageSpeed Insights and Google Search Console. Anything that can't be measured is shown as **not verified**: it's excluded from scores, and the score is labelled **provisional** when important parts are missing.
 
-## Quick start
+## Quick start (local)
 
-Requirements: Node.js 20.9+ (tested on 22), npm.
+Requirements: Node.js ≥ 22.9, npm.
 
 ```bash
 npm install
-cp .env.example .env.local      # optional: add API keys (see below)
-npm run dev                     # http://localhost:3000
+cp .env.example .env.local   # add keys as needed (see Configuration)
+npm run dev                  # http://localhost:3000
 ```
 
-The SQLite database is created at `./data/seo-health.db`, and migrations run automatically on first use. To apply them manually, run `npm run db:migrate`.
+In development, if `AUTH_PASSWORD` is empty the app runs without sign-in. The SQLite database is created at `./data/seo-health.db`, and migrations run automatically.
 
-Production build:
+## Configuration
+
+All configuration comes from environment variables, documented in [`.env.example`](.env.example). Keys are never stored in the database or sent to the browser.
+
+| Variable | Needed for | Notes |
+| --- | --- | --- |
+| `APP_SECRET` | Sign-in, Search Console | 32+ random characters (`openssl rand -base64 32`). Signs sessions and OAuth state, and encrypts the Google refresh token. |
+| `AUTH_PASSWORD` | Production | Owner password, 12+ characters. Production refuses to serve data without it, unless `AUTH_DISABLED=true` behind your own SSO proxy. |
+| `APP_URL` | Search Console, deployment | Public base URL. The OAuth redirect URI is `${APP_URL}/api/integrations/google/callback`. |
+| `TRUST_PROXY` | Deployment behind a proxy | Number of reverse proxies adding `X-Forwarded-For`, used for per-client rate limits. |
+| `PAGESPEED_API_KEY` | Performance category | A free key from Google Cloud with the **PageSpeed Insights API** enabled. Without it Google's anonymous quota usually returns HTTP 429. |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Search Console | OAuth web client; step-by-step setup in [docs/search-console.md](docs/search-console.md). |
+| `ANTHROPIC_API_KEY` | AI consultant (optional) | Default model `claude-opus-5-5` (`AI_MODEL`). |
+
+## Features
+
+- **Audits**: a polite, SSRF-safe crawler (respects robots.txt, uses sitemaps and internal links) feeding 50+ checks, each with evidence, an explanation, the exact fix, implementation guidance, expected benefit and priority.
+- **On-site SEO health score**: weighted from explicit checks (methodology in Settings). It shows **audit coverage**, the share of the scoring model actually measured, and is marked **provisional** when coverage is under 90% or a major category (weighted 15% or more) wasn't measured.
+- **Google search performance** (Search Console): real clicks, impressions, CTR, average position, top queries, top landing pages and URL-inspection index status. Shown separately from the on-site score and never estimated.
+- **PageSpeed Insights**: mobile and desktop lab and field metrics with Lighthouse diagnostics. The API key is sent as a header. 429s are retried with backoff that honours `Retry-After`, and further calls stop once the quota is exhausted. **Re-run PageSpeed tests** re-measures an existing audit and recomputes its scores.
+- **Fix with Claude**: a ready-to-paste prompt for Claude Code built only from verified findings. It includes the detected platform (for example Astro, Next.js or WordPress) with where to look, exact URLs and evidence, guardrails, acceptance criteria and a verification command per task. Available for the whole plan or a single task. Lower-confidence findings are excluded unless you opt in.
+- **SEO Progress**: on-site health, technical score, detected issues (fixed, new, outstanding) and Search Console metrics between audits, with trend charts. Coverage changes are flagged so a newly measured category isn't mistaken for improvement.
+- **Reports**: PDF, JSON, CSV and Markdown developer tasks, plus a printable report with Developer Fix Instructions.
+- **Compare**: any two scans of a site, with issues matched by deterministic IDs.
+
+## Deployment
+
+Built for a single instance with a persistent disk. A Dockerfile and docker-compose file are included. See **[docs/deployment.md](docs/deployment.md)** for requirements, Docker and Node options, the TLS reverse proxy, backups and the pre-launch checklist. The security model and tests are in **[docs/security.md](docs/security.md)**.
 
 ```bash
-npm run build && npm start
+npm run build && npm start     # production server (loads .env.production / .env.local)
 ```
 
-## API keys (all optional)
+## Scripts
 
-| Variable | Used for | Without it |
-| --- | --- | --- |
-| `PAGESPEED_API_KEY` | Google PageSpeed Insights (Lighthouse lab data plus Chrome UX Report field data) for mobile and desktop | Google allows very few anonymous calls (usually HTTP 429). Performance checks show as **not verified**, and the overall score is calculated from the other categories. |
-| `ANTHROPIC_API_KEY` | AI SEO Consultant: a plain-English review written only from measured findings (model set by `AI_MODEL`, default `claude-opus-5-5`) | The button explains how to enable it. Everything else works. |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Reserved for the planned Search Console integration | — |
-
-To get a PageSpeed key, go to Google Cloud Console, enable the **PageSpeed Insights API**, then Credentials → Create API key. It's free.
-
-Crawler and rate-limit settings are documented in `.env.example`.
-
-## Using it
-
-1. **New Audit**: enter a URL, for example `https://urgencyboreholes.co.za/`. Progress streams live; a typical audit takes 1–4 minutes with PageSpeed enabled.
-2. **Dashboard**: overall score, category scores, critical issues, warnings, passing checks, pages scanned, last scan date, and the top fixes.
-3. **Technical / On-Page / Performance / Local SEO**: every check with its status, score and weight. Each expands to per-URL issues with evidence, why it matters, the fix, how to implement it, the expected benefit and the priority. Raw crawl facts and per-page tables are included. Conversion readiness is on the Local SEO page.
-4. **Recommendations**: the prioritised action plan ("Fix first / Fix next / Plan later"), filterable by severity and area, plus the optional AI consultant.
-5. **Reports**: export PDF, JSON, CSV or a Markdown task list, or **copy the developer tasks** straight into Claude Code. The detailed report page includes a dedicated **Developer Fix Instructions** section and is printable.
-6. **Audit History**: open or delete past scans, and **compare** any two scans of the same site to see fixed, new and outstanding issues, pages added or removed, metadata changes and performance deltas.
-7. **Settings**: integration status, crawl limits and the full scoring methodology with every check's weight.
-
-There is also a headless CLI for quick checks: `npm run audit:cli -- https://example.com [--psi]`.
-
-## How scoring works
-
-- Each check returns a score from 0 to 1, usually the share of applicable pages without the problem, with a status of pass, warning, fail or not verified.
-- A category score is the weighted mean of its measurable checks. The overall score is the weighted mean of the category scores: Technical 30%, On-page 25%, Performance 20%, Local 15%, Conversion 10%.
-- Unavailable checks, and whole unavailable categories, are excluded and the remaining weights re-normalised. They are never counted as passed or failed.
-- Issue priority = severity weight × confidence × effort factor + impact bonus (formula in Settings).
-- Issue IDs are `sha1(check | normalised URL | variant)`, so the same problem keeps the same ID across scans. This is what powers the comparison.
+| Script | Purpose |
+| --- | --- |
+| `npm run dev` | Development server |
+| `npm run build` / `npm start` | Production build / standalone server |
+| `npm test` | Vitest suite (crawler safety, checks, scoring, compare, PageSpeed, Search Console, Fix with Claude, auth/CSRF/rate limits/queue) |
+| `npm run lint` / `npm run typecheck` | ESLint / TypeScript |
+| `npm run db:generate` / `npm run db:migrate` | Create / apply Drizzle migrations |
+| `npm run db:backup` | Consistent online backup of the SQLite database |
+| `npm run audit:cli -- <url> [--psi]` | Headless audit without the UI or database |
 
 ## Architecture
 
 ```
-src/lib/crawler/      safe HTTP client (SSRF guard, size/time limits), robots.txt, sitemaps, HTML extraction, crawl orchestration
-src/lib/performance/  PageSpeed Insights client + response parser
-src/lib/audit/        check definitions (checks/*), scoring, issue IDs/priority, local signals, runner, repository, comparison
-src/lib/reports/      action plan, developer tasks (Markdown), CSV/JSON export, PDF (pdfkit)
-src/lib/ai/           optional Anthropic-powered consultant
-src/lib/integrations/ Search Console contract (future)
-src/lib/db/           Drizzle schema + SQLite client; migrations in ./drizzle
-src/app/              Next.js App Router pages and API routes (/api/audits…)
-```
-
-To add a check, add a `CheckDefinition` to the relevant file in `src/lib/audit/checks/`. It's picked up automatically by scoring, the UI, exports and the methodology table.
-
-### Safety and politeness
-
-- Only `http(s)` on ports 80/443/8080/8443. Credentials in URLs are rejected, as are `localhost`, `.local`, `.internal` and similar.
-- Every DNS answer is checked at connect time, so DNS rebinding is covered. Private, loopback, link-local, CGNAT, reserved and IPv4-mapped addresses are blocked, and every redirect hop is re-validated.
-- 15s timeout per request, a 3 MB cap on decompressed responses, at most 5 redirects, and loop detection.
-- robots.txt is obeyed for the crawler's user agent (`SEOHealthMonitor`), with crawl-delay honoured up to 5s and 2 concurrent requests.
-- Starting audits is rate-limited per IP (default 5 per 10 minutes), with at most 2 audits running at once.
-
-## Tests
-
-```bash
-npm test          # vitest: URL/SSRF guards, extraction, sitemap/robots parsing, checks, scoring, issue IDs, comparison, PageSpeed parsing, CSV safety, rate limiting
-npm run lint
-npm run typecheck
+src/proxy.ts                  auth + CSRF enforcement for pages and API routes
+src/instrumentation.ts        starts the background audit worker
+src/lib/crawler/              SSRF-safe HTTP client, robots, sitemaps, extraction (incl. platform detection), crawl
+src/lib/audit/                checks/*, scoring + coverage, issue IDs/priority, queue (jobs), runner, compare, progress
+src/lib/performance/          PageSpeed client (retry/backoff) and job runner (quota circuit breaker)
+src/lib/integrations/search-console/  OAuth + Search Console API client, encrypted token storage, snapshots
+src/lib/reports/              action plan, Fix with Claude prompt, CSV/JSON/PDF
+src/lib/security/             crypto (AES-GCM, HKDF, HMAC, PKCE), auth, route guard
+src/lib/rate-limit.ts         SQLite-backed rate limits
+src/app/(app)/                dashboard and feature pages (sidebar layout)
+src/app/login, src/app/api/   sign-in page and API routes
+drizzle/                      SQL migrations
 ```
 
 ## Known limitations
 
-- **JavaScript-rendered sites**: the crawler reads server HTML. When content appears to need JavaScript, the page is flagged and content findings are marked low-confidence. There is no headless-browser fallback yet.
-- **Crawl scope**: 25 pages per audit (configurable up to 100). Internal links beyond the crawl are status-checked up to 60 targets. External links are not checked.
-- **PageSpeed**: lab results vary between runs. Field data (INP) only exists for sites with enough Chrome traffic. Without an API key, expect performance to be unavailable.
-- **Local SEO**: address and place-name detection is heuristic, and is labelled that way. Google Business Profile, reviews, citations and rankings need external data and are shown as not verified.
-- **Search Console**: not connected yet (see `docs/search-console.md`). The app never claims a page is indexed.
-- **Background jobs** run inside the Next.js server process. An audit interrupted by a restart is marked failed. A multi-instance deployment would need a queue and a shared rate limiter (for example Redis).
-- **Tap-target and font-size checks** need a rendered mobile layout and are listed as not verified.
+- **JavaScript-rendered sites**: content is read from the server HTML. Pages that look JavaScript-rendered are flagged and their content findings marked low-confidence. There's no headless-browser fallback.
+- **Crawl scope**: 25 pages per audit (configurable up to 100), and up to 60 extra internal links status-checked. External links aren't checked.
+- **PageSpeed**: lab results vary between runs, and field data (INP) exists only for sites with enough Chrome traffic.
+- **Search Console**: data lags 2–3 days. Snapshots are 28-day windows that may overlap. While the OAuth consent screen is in "Testing", Google expires the connection after 7 days.
+- **Local SEO**: address and place detection is heuristic. Google Business Profile, reviews, citations and rankings need external data and are shown as not verified.
+- **Single instance**: SQLite and the in-process worker mean one replica only. An audit interrupted by a crash is retried automatically about 90 seconds after restart.
+- **Scheduling**: scans are started manually or through the API; there are no recurring scheduled scans yet.

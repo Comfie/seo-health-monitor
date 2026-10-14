@@ -8,7 +8,10 @@ import {
   ListChecks,
   MapPin,
   PlusCircle,
+  Search,
+  TrendingUp,
   Settings,
+  Sparkles,
   Wrench,
   type LucideIcon,
 } from "lucide-react";
@@ -28,7 +31,12 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       { href: "/", label: "Dashboard", icon: LayoutDashboard, auditScoped: true },
       { href: "/audits/new", label: "New Audit", icon: PlusCircle },
       { href: "/audits", label: "Audit History", icon: History },
+      { href: "/progress", label: "SEO Progress", icon: TrendingUp },
     ],
+  },
+  {
+    label: "Google",
+    items: [{ href: "/search-console", label: "Search Performance", icon: Search }],
   },
   {
     label: "Findings",
@@ -43,6 +51,7 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   {
     label: "Output",
     items: [
+      { href: "/fix", label: "Fix with Claude", icon: Sparkles, auditScoped: true },
       { href: "/reports", label: "Reports", icon: FileText, auditScoped: true },
       { href: "/settings", label: "Settings", icon: Settings },
     ],

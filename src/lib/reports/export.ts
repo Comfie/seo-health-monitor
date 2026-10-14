@@ -1,6 +1,8 @@
 import "server-only";
 import type { FullAudit } from "@/lib/audit/repository";
 import { buildActionPlan } from "./action-plan";
+import { assessScore } from "@/lib/audit/scoring";
+import { CATEGORY_LABELS } from "@/lib/audit/types";
 
 function csvCell(value: unknown): string {
   const text = value === null || value === undefined ? "" : Array.isArray(value) ? value.join(" | ") : String(value);
@@ -29,7 +31,8 @@ export function auditToJson(full: FullAudit) {
       startedAt: audit.startedAt,
       completedAt: audit.completedAt,
       pagesScanned: audit.pagesScanned,
-      scores: { overall: audit.overallScore, categories: audit.categoryScores },
+      scores: { overall: audit.overallScore, categories: audit.categoryScores, label: "On-site SEO health" },
+      scoreAssessment: assessScore(checks, CATEGORY_LABELS),
       counts: audit.counts,
     },
     crawl: meta

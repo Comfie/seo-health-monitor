@@ -77,6 +77,8 @@ export interface ExtractedPage {
   hreflang: { lang: string; href: string }[];
   jsRendering: { suspected: boolean; reasons: string[] };
   scriptCount: number;
+  /** Detected site platform/framework with the signal that revealed it. */
+  platform?: { name: string; evidence: string } | null;
 }
 
 export interface PageData {
@@ -147,6 +149,8 @@ export interface PerformanceResult {
   strategy: "mobile" | "desktop";
   status: "ok" | "unavailable";
   error?: string;
+  /** Why it is unavailable, so callers can stop early on quota exhaustion. */
+  errorCode?: "quota" | "timeout" | "http" | "lighthouse" | "network" | "skipped";
   performanceScore?: number | null;
   lcpMs?: number | null;
   cls?: number | null;

@@ -4,7 +4,6 @@ import path from "node:path";
 import Database from "better-sqlite3";
 import { drizzle, type BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
-import { inArray } from "drizzle-orm";
 import { config } from "@/lib/config";
 import * as schema from "./schema";
 
@@ -20,11 +19,6 @@ function open(): Db {
   sqlite.pragma("foreign_keys = ON");
   const db = drizzle(sqlite, { schema });
   migrate(db, { migrationsFolder: path.resolve(/*turbopackIgnore: true*/ process.cwd(), "drizzle") });
-  // Audits run in-process; any audit still "running" at boot was interrupted.
-  db.update(schema.audits)
-    .set({ status: "failed", error: "The audit was interrupted because the server restarted." })
-    .where(inArray(schema.audits.status, ["queued", "running"]))
-    .run();
   return db;
 }
 

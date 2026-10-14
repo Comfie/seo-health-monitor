@@ -1,0 +1,17 @@
+# Single-instance deployment: one container, SQLite on a named volume.
+# Secrets go in .env.production (never committed): see docs/deployment.md.
+services:
+  app:
+    build: .
+    image: seo-health-monitor:latest
+    restart: unless-stopped
+    env_file: .env.production
+    environment:
+      DATABASE_PATH: /data/seo-health.db
+    ports:
+      - "127.0.0.1:3000:3000" # expose via a TLS reverse proxy, not directly
+    volumes:
+      - seo-data:/data
+
+volumes:
+  seo-data:

@@ -2,7 +2,7 @@ import "server-only";
 import PDFDocument from "pdfkit";
 import type { FullAudit } from "@/lib/audit/repository";
 import { CATEGORIES, CATEGORY_LABELS } from "@/lib/audit/types";
-import { scoreLabel } from "@/lib/audit/scoring";
+import { assessScore, scoreLabel } from "@/lib/audit/scoring";
 import { buildActionPlan, categoryLabel } from "./action-plan";
 
 const COLORS = {
@@ -70,6 +70,10 @@ export async function renderAuditPdf(full: FullAudit): Promise<Buffer> {
   doc.font("Helvetica").fontSize(14).fillColor(COLORS.muted).text(`/ 100   ${scoreLabel(overall)}`, 50 + scoreWidth + 10, top + 26, { lineBreak: false });
   doc.x = 50;
   doc.y = top + 64;
+  const assessment = assessScore(checks, CATEGORY_LABELS);
+  doc.font("Helvetica-Bold").fontSize(10).fillColor(assessment.provisional ? COLORS.medium : COLORS.ink).text(`On-site SEO health${assessment.provisional ? " - PROVISIONAL" : ""}`);
+  muted(`Audit coverage: ${Math.round(assessment.coverage * 100)}% of the scoring model measured. ${assessment.reasons.join(" ")}`);
+  doc.moveDown(0.5);
   const cats = audit.categoryScores ?? {};
   for (const c of CATEGORIES) {
     const s = (cats as Record<string, number | null>)[c] ?? null;
@@ -81,7 +85,7 @@ export async function renderAuditPdf(full: FullAudit): Promise<Buffer> {
   body(`Critical issues: ${counts.critical ?? 0}   High: ${counts.high ?? 0}   Medium: ${counts.medium ?? 0}   Low: ${counts.low ?? 0}`);
   body(`Passing checks: ${counts.passing ?? 0} of ${counts.totalChecks ?? 0}   Not verifiable from a public crawl: ${counts.unavailable ?? 0}`);
   doc.moveDown(0.6);
-  muted("Scores are weighted averages of explicit checks (Technical 30%, On-page 25%, Performance 20%, Local 15%, Conversion 10%). Unavailable checks are excluded rather than counted as passes or failures. Search Console data is not included.");
+  muted("Scores are weighted averages of explicit checks (Technical 30%, On-page 25%, Performance 20%, Local 15%, Conversion 10%). Unavailable checks are excluded rather than counted as passes or failures. This measures the website itself; actual Google search performance (Search Console) is reported separately.");
   if (meta?.notes.length) {
     doc.moveDown(0.5);
     for (const n of meta.notes) muted(`Note: ${n}`);

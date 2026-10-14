@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { parsePsiResponse } from "@/lib/performance/pagespeed";
 import { issuesToCsv } from "@/lib/reports/export";
 import type { FullAudit } from "@/lib/audit/repository";
@@ -35,5 +35,63 @@ describe("CSV export", () => {
     const row = issuesToCsv(full).split("\r\n")[1];
     expect(row).toContain(`"'=HYPERLINK(""x"")"`);
     expect(row).toContain(`"Title: ""a, b"""`);
+  });
+});
+
+describe("runPageSpeed / runPerformanceJobs", () => {
+  const ok = { lighthouseResult: { categories: { performance: { score: 0.91 } }, audits: { "largest-contentful-paint": { id: "largest-contentful-paint", title: "LCP", score: 1, numericValue: 1800 } } } };
+  const json = (body: unknown, status = 200, headers: Record<string, string> = {}) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", ...headers } });
+  const noSleep = async () => {};
+
+  it("sends the key in a header, never in the URL", async () => {
+    const { runPageSpeed } = await import("@/lib/performance/pagespeed");
+    const fetchMock = vi.fn(async () => json(ok));
+    vi.stubGlobal("fetch", fetchMock);
+    const r = await runPageSpeed("https://x.test/", "mobile", { apiKey: "SECRET-KEY", timeoutMs: 1000, sleep: noSleep });
+    expect(r).toMatchObject({ status: "ok", performanceScore: 91 });
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).not.toContain("SECRET-KEY");
+    expect((init.headers as Record<string, string>)["x-goog-api-key"]).toBe("SECRET-KEY");
+    vi.unstubAllGlobals();
+  });
+
+  it("retries 429 honouring Retry-After, then reports quota", async () => {
+    const { runPageSpeed } = await import("@/lib/performance/pagespeed");
+    const waits: number[] = [];
+    vi.stubGlobal("fetch", vi.fn(async () => json({ error: { message: "Quota exceeded" } }, 429, { "retry-after": "7" })));
+    const r = await runPageSpeed("https://x.test/", "mobile", { timeoutMs: 1000, retries: 2, sleep: async (ms) => void waits.push(ms) });
+    expect(waits).toEqual([7000, 7000]);
+    expect(r).toMatchObject({ status: "unavailable", errorCode: "quota" });
+    expect(r.error).toMatch(/PAGESPEED_API_KEY/);
+    vi.unstubAllGlobals();
+  });
+
+  it("recovers from a transient error", async () => {
+    const { runPageSpeed } = await import("@/lib/performance/pagespeed");
+    let n = 0;
+    vi.stubGlobal("fetch", vi.fn(async () => (n++ === 0 ? json({ error: { message: "backend" } }, 503) : json(ok))));
+    expect((await runPageSpeed("https://x.test/", "desktop", { timeoutMs: 1000, sleep: noSleep })).status).toBe("ok");
+    vi.unstubAllGlobals();
+  });
+
+  it("explains a rejected API key", async () => {
+    const { runPageSpeed } = await import("@/lib/performance/pagespeed");
+    vi.stubGlobal("fetch", vi.fn(async () => json({ error: { message: "API key not valid. Please pass a valid API key." } }, 400)));
+    const r = await runPageSpeed("https://x.test/", "mobile", { apiKey: "bad", timeoutMs: 1000, sleep: noSleep });
+    expect(r.error).toMatch(/rejected the API key/);
+    expect(r.error).not.toContain("bad");
+    vi.unstubAllGlobals();
+  });
+
+  it("stops calling Google once the quota is exhausted", async () => {
+    const { runPerformanceJobs } = await import("@/lib/performance/run");
+    const fetchMock = vi.fn(async () => json({ error: { message: "Quota" } }, 429));
+    vi.stubGlobal("fetch", fetchMock);
+    const results = await runPerformanceJobs(["https://x.test/", "https://x.test/a"], { timeoutMs: 1000, retries: 0, concurrency: 1, sleep: noSleep });
+    expect(results).toHaveLength(4);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(results.filter((r) => r.errorCode === "skipped")).toHaveLength(3);
+    expect(results.map((r) => r.strategy)).toEqual(["mobile", "desktop", "mobile", "desktop"]);
+    vi.unstubAllGlobals();
   });
 });

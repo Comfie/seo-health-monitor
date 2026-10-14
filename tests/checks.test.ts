@@ -92,3 +92,18 @@ describe("scoring", () => {
     expect(categoryScore([mk(3, 1), mk(1, 0, "fail"), mk(5, null, "unavailable")], "technical")).toBe(75);
   });
 });
+
+describe("assessScore", () => {
+  it("marks the score provisional when a major category is unmeasured", async () => {
+    const { assessScore } = await import("@/lib/audit/scoring");
+    const { CATEGORY_LABELS } = await import("@/lib/audit/types");
+    const mk = (category: string, status = "pass", score: number | null = 1) => ({ category, weight: 1, status, score });
+    const all = ["technical", "onpage", "local", "conversion"].map((c) => mk(c));
+    const without = assessScore([...all, mk("performance", "unavailable", null)], CATEGORY_LABELS);
+    expect(without.coverage).toBeCloseTo(0.8);
+    expect(without.provisional).toBe(true);
+    expect(without.reasons[0]).toMatch(/Performance \(20% of the score\)/);
+    const full = assessScore([...all, mk("performance")], CATEGORY_LABELS);
+    expect(full).toMatchObject({ coverage: 1, provisional: false });
+  });
+});

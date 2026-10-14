@@ -30,11 +30,17 @@ export const config = {
   },
   rateLimit: {
     max: intEnv("AUDIT_RATE_LIMIT_MAX", 5, 1, 1000),
+    /** Across all clients in the same window (protects against spoofed client identities). */
+    globalMax: intEnv("AUDIT_RATE_LIMIT_GLOBAL_MAX", 30, 1, 10_000),
     windowMs: intEnv("AUDIT_RATE_LIMIT_WINDOW_MS", 600_000, 1_000, 86_400_000),
   },
+  /** Public base URL of this app, used to build the OAuth redirect URI. */
+  appUrl: (strEnv("APP_URL") ?? "http://localhost:3000").replace(/\/$/, ""),
   searchConsole: {
     clientId: strEnv("GOOGLE_CLIENT_ID"),
     clientSecret: strEnv("GOOGLE_CLIENT_SECRET"),
+    /** Pages per snapshot sent to the URL Inspection API (quota ~2,000/day/property). */
+    maxInspections: intEnv("GSC_MAX_INSPECTIONS", 25, 0, 100),
   },
 };
 

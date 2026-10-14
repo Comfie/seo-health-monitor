@@ -22,7 +22,7 @@ export function AiConsultantButton({ auditId, configured, hasReport }: { auditId
     setPending(true);
     setError(null);
     try {
-      const res = await fetch(`/api/audits/${auditId}/ai`, { method: "POST" });
+      const res = await fetch(`/api/audits/${auditId}/ai${hasReport ? "?regenerate=1" : ""}`, { method: "POST" });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
       router.refresh();

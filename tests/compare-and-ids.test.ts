@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { issueKey, priorityBucket, priorityScore } from "@/lib/audit/issues";
 import { compareAudits, type CompareInput } from "@/lib/audit/compare";
 import { buildActionPlan, buildDeveloperTasks, type IssueLike } from "@/lib/reports/action-plan";
-import { RateLimiter } from "@/lib/rate-limit";
 
 describe("issue identity", () => {
   it("is deterministic and ignores www/fragment differences", () => {
@@ -70,15 +69,5 @@ describe("action plan and developer tasks", () => {
     const md = buildDeveloperTasks("https://x.test", new Date("2026-01-01"), [issue("a", "https://x.test/a")]);
     expect(md).toContain("## 1. Missing H1 heading");
     expect(md).toContain("- [ ] https://x.test/a");
-  });
-});
-
-describe("RateLimiter", () => {
-  it("blocks after the limit within the window", () => {
-    const rl = new RateLimiter(2, 1000);
-    expect(rl.check("ip", 0).allowed).toBe(true);
-    expect(rl.check("ip", 10).allowed).toBe(true);
-    expect(rl.check("ip", 20).allowed).toBe(false);
-    expect(rl.check("ip", 1500).allowed).toBe(true);
   });
 });

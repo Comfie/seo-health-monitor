@@ -20,7 +20,7 @@ async function main() {
     for (const page of selectPerformancePages(crawl, config.pagespeed.maxPages)) {
       for (const strategy of ["mobile", "desktop"] as const) {
         process.stderr.write(`PSI ${strategy} ${page}\n`);
-        performance.push(await runPageSpeed(page, strategy, config.pagespeedApiKey, config.pagespeed.timeoutMs));
+        performance.push(await runPageSpeed(page, strategy, { apiKey: config.pagespeedApiKey, timeoutMs: config.pagespeed.timeoutMs }));
       }
     }
   }

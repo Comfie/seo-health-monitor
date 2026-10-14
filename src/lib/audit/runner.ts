@@ -3,48 +3,13 @@ import { eq, sql } from "drizzle-orm";
 import { config } from "@/lib/config";
 import { getDb, schema } from "@/lib/db";
 import { crawlSite, CrawlError } from "@/lib/crawler/crawl";
-import { assertSafeUrl } from "@/lib/crawler/ssrf";
 import { isUtilityPage } from "./checks/helpers";
-import { normalizeInputUrl, stripWww } from "@/lib/crawler/url";
-import { runPageSpeed } from "@/lib/performance/pagespeed";
+import { runPerformanceJobs } from "@/lib/performance/run";
 import { runChecks } from "./checks";
 import { collectLocalSignals } from "./local-signals";
 import { computeCounts, computeScores } from "./scoring";
+import { fetchSnapshot, getSiteConnection } from "@/lib/integrations/search-console/service";
 import type { AuditContext, CrawlResult, PageData, PerformanceResult } from "./types";
-
-export class AuditBusyError extends Error {}
-
-const MAX_CONCURRENT_AUDITS = 2;
-const running = ((globalThis as unknown as { __seoRunning?: Set<number> }).__seoRunning ??= new Set<number>());
-
-export function runningAuditCount(): number {
-  return running.size;
-}
-
-/** Validates the URL, records a queued audit and starts it in the background. */
-export function startAudit(inputUrl: string): number {
-  const startUrl = normalizeInputUrl(inputUrl);
-  assertSafeUrl(startUrl);
-  if (running.size >= MAX_CONCURRENT_AUDITS) {
-    throw new AuditBusyError(`${running.size} audits are already running. Please wait for one to finish.`);
-  }
-  const db = getDb();
-  const host = stripWww(new URL(startUrl).hostname);
-  const site = db
-    .insert(schema.sites)
-    .values({ host, displayUrl: startUrl })
-    .onConflictDoUpdate({ target: schema.sites.host, set: { displayUrl: startUrl } })
-    .returning()
-    .get();
-  const audit = db
-    .insert(schema.audits)
-    .values({ siteId: site.id, inputUrl, startUrl, status: "queued", stage: "Queued", progress: 0 })
-    .returning()
-    .get();
-  running.add(audit.id);
-  void runAudit(audit.id, startUrl).finally(() => running.delete(audit.id));
-  return audit.id;
-}
 
 function progressUpdater(auditId: number) {
   const db = getDb();
@@ -79,25 +44,13 @@ async function runPerformance(crawl: CrawlResult, report: (p: number, m: string,
   if (config.pagespeed.maxPages === 0) return { results: [], skipped: "PageSpeed testing is disabled (PAGESPEED_MAX_PAGES=0)." };
   const urls = selectPerformancePages(crawl, config.pagespeed.maxPages);
   if (!urls.length) return { results: [], skipped: "No successfully crawled HTML pages were available for PageSpeed testing." };
-  const jobs = urls.flatMap((url) => (["mobile", "desktop"] as const).map((strategy) => ({ url, strategy })));
-  const results: PerformanceResult[] = [];
-  let cursor = 0;
-  let done = 0;
-  await Promise.all(
-    Array.from({ length: 2 }, async () => {
-      while (cursor < jobs.length) {
-        const job = jobs[cursor++];
-        report(70 + (done / jobs.length) * 22, `PageSpeed Insights (${job.strategy}): ${job.url}`, true);
-        let result = await runPageSpeed(job.url, job.strategy, config.pagespeedApiKey, config.pagespeed.timeoutMs);
-        // One retry for transient failures (not quota errors).
-        if (result.status === "unavailable" && !/429|quota/i.test(result.error ?? "")) {
-          result = await runPageSpeed(job.url, job.strategy, config.pagespeedApiKey, config.pagespeed.timeoutMs);
-        }
-        results.push(result);
-        done++;
-      }
-    }),
-  );
+  const results = await runPerformanceJobs(urls, {
+    apiKey: config.pagespeedApiKey,
+    timeoutMs: config.pagespeed.timeoutMs,
+    // Anonymous quota is tiny; don't burst it.
+    concurrency: config.pagespeedApiKey ? 2 : 1,
+    onProgress: (done, total, label) => report(70 + (done / total) * 22, label, true),
+  });
   return { results };
 }
 
@@ -107,10 +60,10 @@ function slimPage(page: PageData): Record<string, unknown> {
   return { ...page, extracted: { ...extracted, bodyText: bodyText.slice(0, 1500) } };
 }
 
-async function runAudit(auditId: number, startUrl: string): Promise<void> {
+/** Runs one claimed audit end to end. Called by the queue worker. Never throws. */
+export async function executeAudit(auditId: number, startUrl: string): Promise<void> {
   const db = getDb();
   const report = progressUpdater(auditId);
-  db.update(schema.audits).set({ status: "running", startedAt: new Date(), stage: "Starting" }).where(eq(schema.audits.id, auditId)).run();
 
   try {
     const crawl = await crawlSite(startUrl, { ...config.crawl, onProgress: (p, m) => report(p, m) });
@@ -215,6 +168,14 @@ async function runAudit(auditId: number, startUrl: string): Promise<void> {
         .where(eq(schema.audits.id, auditId))
         .run();
     });
+
+    // Search Console data is stored separately and never affects the audit result.
+    const siteId = db.select({ siteId: schema.audits.siteId }).from(schema.audits).where(eq(schema.audits.id, auditId)).get()?.siteId;
+    if (siteId && getSiteConnection(siteId)) {
+      await fetchSnapshot(siteId, { auditId, pageUrls: crawl.pages.filter((p) => p.status === 200 && p.isHtml).map((p) => p.finalUrl) }).catch((err) =>
+        console.error(`[audit ${auditId}] Search Console snapshot failed`, err),
+      );
+    }
   } catch (err) {
     const message =
       err instanceof CrawlError || (err as Error).name === "UrlValidationError" || (err as { code?: string }).code === "SSRF_BLOCKED"

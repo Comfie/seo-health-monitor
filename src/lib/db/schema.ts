@@ -37,9 +37,12 @@ export const audits = sqliteTable(
     aiGeneratedAt: integer("ai_generated_at", { mode: "timestamp_ms" }),
     startedAt: integer("started_at", { mode: "timestamp_ms" }),
     completedAt: integer("completed_at", { mode: "timestamp_ms" }),
+    /** Background job bookkeeping: claims, liveness and retry count. */
+    attempts: integer("attempts").notNull().default(0),
+    heartbeatAt: integer("heartbeat_at", { mode: "timestamp_ms" }),
     createdAt: createdAt(),
   },
-  (t) => [index("audits_site_idx").on(t.siteId, t.createdAt)],
+  (t) => [index("audits_site_idx").on(t.siteId, t.createdAt), index("audits_status_idx").on(t.status)],
 );
 
 export const pages = sqliteTable(
@@ -148,8 +151,21 @@ export const performanceResults = sqliteTable(
 );
 
 /**
- * Reserved for the future Google Search Console integration. Search Console
- * data is stored separately from audits and never feeds the technical scores.
+ * The Google account authorised for Search Console (read-only scope).
+ * The refresh token is AES-256-GCM encrypted with a key derived from APP_SECRET.
+ */
+export const googleAccounts = sqliteTable("google_accounts", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  email: text("email"),
+  encryptedRefreshToken: text("encrypted_refresh_token").notNull(),
+  scopes: text("scopes").notNull(),
+  connectedAt: integer("connected_at", { mode: "timestamp_ms" }).notNull(),
+  lastError: text("last_error"),
+});
+
+/**
+ * Links a site to a Search Console property. Search Console data is stored
+ * separately from audits and never feeds the technical scores.
  */
 export const searchConsoleConnections = sqliteTable("search_console_connections", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -159,7 +175,62 @@ export const searchConsoleConnections = sqliteTable("search_console_connections"
   property: text("property").notNull(),
   status: text("status", { enum: ["connected", "revoked", "error"] }).notNull(),
   scopes: text("scopes").notNull(),
-  encryptedRefreshToken: text("encrypted_refresh_token"),
   connectedAt: integer("connected_at", { mode: "timestamp_ms" }),
   createdAt: createdAt(),
+});
+
+export interface SearchRowData {
+  key: string;
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  position: number;
+}
+
+export interface InspectionData {
+  url: string;
+  verdict: string;
+  coverageState: string | null;
+  indexingState: string | null;
+  robotsTxtState: string | null;
+  pageFetchState: string | null;
+  lastCrawlTime: string | null;
+  googleCanonical: string | null;
+  userCanonical: string | null;
+  error?: string;
+}
+
+/** A point-in-time pull of real Search Console data for one site/property. */
+export const searchSnapshots = sqliteTable(
+  "search_snapshots",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    siteId: integer("site_id")
+      .notNull()
+      .references(() => sites.id, { onDelete: "cascade" }),
+    auditId: integer("audit_id").references(() => audits.id, { onDelete: "set null" }),
+    property: text("property").notNull(),
+    status: text("status", { enum: ["ok", "error"] }).notNull(),
+    error: text("error"),
+    startDate: text("start_date").notNull(),
+    endDate: text("end_date").notNull(),
+    clicks: real("clicks"),
+    impressions: real("impressions"),
+    ctr: real("ctr"),
+    position: real("position"),
+    previous: text("previous", { mode: "json" }).$type<{ clicks: number; impressions: number; ctr: number; position: number } | null>(),
+    daily: text("daily", { mode: "json" }).$type<{ date: string; clicks: number; impressions: number; ctr: number; position: number }[]>(),
+    topQueries: text("top_queries", { mode: "json" }).$type<SearchRowData[]>(),
+    topPages: text("top_pages", { mode: "json" }).$type<SearchRowData[]>(),
+    inspections: text("inspections", { mode: "json" }).$type<InspectionData[]>(),
+    fetchedAt: integer("fetched_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (t) => [index("snapshots_site_idx").on(t.siteId, t.fetchedAt)],
+);
+
+/** Fixed-window rate-limit counters, persisted so limits survive restarts. */
+export const rateLimits = sqliteTable("rate_limits", {
+  key: text("key").primaryKey(),
+  windowStart: integer("window_start").notNull(),
+  count: integer("count").notNull(),
 });
