@@ -80,7 +80,7 @@ export function categoryLabel(category: string): string {
 }
 
 /**
- * Markdown task list for Claude Code or a developer: one task per problem with
+ * Markdown task list for an AI coding tool or a developer: one task per problem with
  * the exact URLs, evidence and implementation guidance.
  */
 export function buildDeveloperTasks(siteUrl: string, auditDate: Date | null, issues: IssueLike[]): string {

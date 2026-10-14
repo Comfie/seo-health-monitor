@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildFixPrompt, selectFixItems } from "@/lib/reports/claude-fix";
+import { buildFixPrompt, selectFixItems } from "@/lib/reports/fix-prompt";
 import { detectPlatform } from "@/lib/crawler/extract";
 import type { IssueLike } from "@/lib/reports/action-plan";
 
@@ -10,7 +10,7 @@ const issue = (over: Partial<IssueLike>): IssueLike => ({
 
 const base = { siteUrl: "https://x.test", auditId: 7, auditDate: new Date("2026-10-14"), platform: { name: "Astro", evidence: "/_astro assets" }, scope: "all" as const, includeLowConfidence: false };
 
-describe("Fix with Claude", () => {
+describe("Fix with AI", () => {
   const issues = [
     issue({}),
     issue({ url: "https://x.test/b" }),
@@ -58,9 +58,9 @@ describe("detectPlatform", () => {
   });
 });
 
-describe("Fix with Claude: hostile crawled content", () => {
+describe("Fix with AI: hostile crawled content", () => {
   it("shell-quotes URLs so crawled links can't inject commands", async () => {
-    const { shellQuote } = await import("@/lib/reports/claude-fix");
+    const { shellQuote } = await import("@/lib/reports/fix-prompt");
     const { execFileSync } = await import("node:child_process");
     for (const payload of ["https://x.test/a;touch /tmp/pwned", "https://x.test/$(id)", "https://x.test/it's|cat /etc/passwd", "https://x.test/`id`&&echo"]) {
       // A real shell must hand back the exact literal input: nothing executed, nothing expanded.

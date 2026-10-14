@@ -20,7 +20,7 @@ export function ExportToolbar({ auditId, showPrint = false }: { auditId: number;
       <a href={href("md")} className={buttonVariants({ variant: "outline" })}>
         <FileText /> Tasks (.md)
       </a>
-      <CopyButton url={href("tasks")} label="Copy tasks for Claude Code" copiedMessage="Developer task list copied" />
+      <CopyButton url={href("tasks")} label="Copy developer tasks" copiedMessage="Developer task list copied" />
       {showPrint && (
         <Button variant="ghost" onClick={() => window.print()}>
           <Printer /> Print

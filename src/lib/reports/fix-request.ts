@@ -1,6 +1,6 @@
 import "server-only";
 import type { FullAudit } from "@/lib/audit/repository";
-import { buildFixPrompt, type FixPromptOptions } from "./claude-fix";
+import { buildFixPrompt, type FixPromptOptions } from "./fix-prompt";
 
 export function fixOptionsFrom(params: URLSearchParams | Record<string, string | string[] | undefined>): Pick<FixPromptOptions, "scope" | "includeLowConfidence" | "taskId"> {
   const get = (k: string) => (params instanceof URLSearchParams ? params.get(k) : (Array.isArray(params[k]) ? params[k]![0] : (params[k] as string | undefined)) ?? null);

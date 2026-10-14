@@ -58,7 +58,7 @@ async function RecommendationsContent({ searchParams }: PageProps<"/recommendati
         ))}
         <span className="ml-auto">
           <Link href={`/fix?audit=${audit.id}`} className={buttonVariants()}>
-            <Sparkles /> Fix with Claude
+            <Sparkles /> Fix with AI
           </Link>
         </span>
       </div>
@@ -96,7 +96,7 @@ async function RecommendationsContent({ searchParams }: PageProps<"/recommendati
                     </summary>
                     <div className="border-t px-4 py-4 sm:pl-13">
                       <div className="no-print mb-3">
-                        <CopyButton url={`/api/audits/${audit.id}/fix?task=${encodeURIComponent(item.id)}&low=1`} label="Fix with Claude (copy this task)" copiedMessage="Task prompt copied. Paste it into Claude Code." />
+                        <CopyButton url={`/api/audits/${audit.id}/fix?task=${encodeURIComponent(item.id)}&low=1`} label="Fix with AI (copy this task)" copiedMessage="Task prompt copied. Paste it into your AI coding tool." />
                       </div>
                       <dl className="grid gap-2 text-sm sm:grid-cols-[9rem_1fr]">
                         <dt className="text-muted-foreground">Why it matters</dt>

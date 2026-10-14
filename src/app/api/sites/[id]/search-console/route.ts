@@ -5,6 +5,7 @@ import { getDb, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { GoogleApiError } from "@/lib/integrations/search-console/google";
 import { linkProperty, unlinkProperty } from "@/lib/integrations/search-console/service";
+import { applySearchConsoleToLatestAudit } from "@/lib/audit/index-status";
 
 async function siteFrom(ctx: RouteContext<"/api/sites/[id]/search-console">) {
   const id = Number.parseInt((await ctx.params).id, 10);
@@ -33,5 +34,6 @@ export async function DELETE(request: Request, ctx: RouteContext<"/api/sites/[id
   const site = await siteFrom(ctx);
   if (!site) return NextResponse.json({ error: "Site not found." }, { status: 404 });
   unlinkProperty(site.id);
+  applySearchConsoleToLatestAudit(site.id);
   return NextResponse.json({ unlinked: true });
 }

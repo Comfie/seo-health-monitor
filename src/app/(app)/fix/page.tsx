@@ -8,11 +8,11 @@ import { CopyButton } from "@/components/app/copy-button";
 import { NoAuditYet } from "@/components/app/empty-state";
 import { Section } from "@/components/app/page-header";
 import { loadAuditView } from "@/lib/audit/views";
-import { selectFixItems } from "@/lib/reports/claude-fix";
+import { selectFixItems } from "@/lib/reports/fix-prompt";
 import { fixOptionsFrom, fixPromptForAudit } from "@/lib/reports/fix-request";
 import { cn } from "@/lib/utils";
 
-export const metadata = { title: "Fix with Claude" };
+export const metadata = { title: "Fix with AI" };
 
 async function FixContent(props: PageProps<"/fix">) {
   const view = await loadAuditView(props.searchParams);
@@ -33,7 +33,7 @@ async function FixContent(props: PageProps<"/fix">) {
 
   return (
     <>
-      <CategoryHeader view={view} title="Fix with Claude" description="Implementation-ready instructions built only from this audit's verified findings. Paste them into Claude Code in the website's repository." />
+      <CategoryHeader view={view} title="Fix with AI" description="Implementation-ready instructions built only from this audit's verified findings. Works with any AI coding tool (Claude Code, Codex, Cursor, GitHub Copilot and others) or a developer." />
 
       <div className="no-print mb-6 flex flex-wrap items-center gap-2">
         <Link href={q({ scope: "first" })} className={chip(options.scope === "first")}>Fix first only</Link>
@@ -43,7 +43,7 @@ async function FixContent(props: PageProps<"/fix">) {
           {options.includeLowConfidence ? "Including" : "Include"} lower-confidence findings
         </Link>
         <span className="ml-auto flex gap-2">
-          <CopyButton url={`/api/audits/${audit.id}/fix?${query}`} label="Copy prompt" copiedMessage="Prompt copied. Paste it into Claude Code." />
+          <CopyButton url={`/api/audits/${audit.id}/fix?${query}`} label="Copy prompt" copiedMessage="Prompt copied. Paste it into your AI coding tool." />
           <a href={`/api/audits/${audit.id}/fix?${query}&download=1`} className={buttonVariants({ variant: "outline" })}>
             <Download /> Download .md
           </a>
@@ -64,7 +64,7 @@ async function FixContent(props: PageProps<"/fix">) {
         ))}
       </dl>
 
-      <Section title="How to use it" description="Open Claude Code in the repository that builds this website, paste the prompt, and review each change before deploying. Re-run the audit afterwards to confirm the fixes.">
+      <Section title="How to use it" description="Open your AI coding tool (Claude Code, Codex, Cursor, Copilot…) in the repository that builds this website, paste the prompt, and review each change before deploying. You can also hand it to a developer as a task list. Re-run the audit afterwards to confirm the fixes.">
         <pre className="max-h-[36rem] overflow-auto rounded-lg border bg-card p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap">{prompt}</pre>
       </Section>
     </>

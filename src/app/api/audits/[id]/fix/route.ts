@@ -3,7 +3,7 @@ import { NextResponse, connection } from "next/server";
 import { getFullAudit } from "@/lib/audit/repository";
 import { fixOptionsFrom, fixPromptForAudit } from "@/lib/reports/fix-request";
 
-/** Markdown "Fix with Claude" prompt. ?scope=first|all&low=1&task=<action item id>&download=1 */
+/** Markdown "Fix with AI" prompt. ?scope=first|all&low=1&task=<action item id>&download=1 */
 export async function GET(request: Request, ctx: RouteContext<"/api/audits/[id]/fix">) {
   const denied = guard(request);
   if (denied) return denied;
@@ -14,6 +14,6 @@ export async function GET(request: Request, ctx: RouteContext<"/api/audits/[id]/
   const params = new URL(request.url).searchParams;
   const body = fixPromptForAudit(full, fixOptionsFrom(params));
   const headers: Record<string, string> = { "content-type": "text/markdown; charset=utf-8" };
-  if (params.get("download") === "1") headers["content-disposition"] = `attachment; filename="fix-with-claude-audit-${id}.md"`;
+  if (params.get("download") === "1") headers["content-disposition"] = `attachment; filename="seo-fix-tasks-audit-${id}.md"`;
   return new NextResponse(body, { headers });
 }

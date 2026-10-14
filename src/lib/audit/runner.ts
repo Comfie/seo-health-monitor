@@ -9,6 +9,7 @@ import { runChecks } from "./checks";
 import { collectLocalSignals } from "./local-signals";
 import { computeCounts, computeScores } from "./scoring";
 import { fetchSnapshot, getSiteConnection } from "@/lib/integrations/search-console/service";
+import { searchConsoleContext } from "./index-status";
 import type { AuditContext, CrawlResult, PageData, PerformanceResult } from "./types";
 
 function progressUpdater(auditId: number) {
@@ -71,7 +72,15 @@ export async function executeAudit(auditId: number, startUrl: string): Promise<v
     const perf = await runPerformance(crawl, report);
 
     report(94, "Analysing findings", true);
-    const ctx: AuditContext = { ...crawl, performance: perf.results, performanceSkippedReason: perf.skipped };
+    // Search Console: store a fresh snapshot (separate from scores) and give the
+    // weight-0 "Google index coverage" check Google's index status for these pages.
+    const siteId = db.select({ siteId: schema.audits.siteId }).from(schema.audits).where(eq(schema.audits.id, auditId)).get()!.siteId;
+    const pageUrls = crawl.pages.filter((p) => p.status === 200 && p.isHtml).map((p) => p.finalUrl);
+    if (getSiteConnection(siteId)) {
+      report(93, "Fetching Google Search Console data", true);
+      await fetchSnapshot(siteId, { auditId, pageUrls }).catch((err) => console.error(`[audit ${auditId}] Search Console snapshot failed`, err));
+    }
+    const ctx: AuditContext = { ...crawl, performance: perf.results, performanceSkippedReason: perf.skipped, searchConsole: searchConsoleContext(siteId, pageUrls) };
     const checks = runChecks(ctx);
     const issues = checks.flatMap((c) => c.issues);
     const scores = computeScores(checks);
@@ -169,13 +178,6 @@ export async function executeAudit(auditId: number, startUrl: string): Promise<v
         .run();
     });
 
-    // Search Console data is stored separately and never affects the audit result.
-    const siteId = db.select({ siteId: schema.audits.siteId }).from(schema.audits).where(eq(schema.audits.id, auditId)).get()?.siteId;
-    if (siteId && getSiteConnection(siteId)) {
-      await fetchSnapshot(siteId, { auditId, pageUrls: crawl.pages.filter((p) => p.status === 200 && p.isHtml).map((p) => p.finalUrl) }).catch((err) =>
-        console.error(`[audit ${auditId}] Search Console snapshot failed`, err),
-      );
-    }
   } catch (err) {
     const message =
       err instanceof CrawlError || (err as Error).name === "UrlValidationError" || (err as { code?: string }).code === "SSRF_BLOCKED"

@@ -60,7 +60,8 @@ function scoreCheck(ctx: AuditContext, checkId: string, strategy: "mobile" | "de
       checkId,
       url: r.url,
       severity: r.performanceScore! < 50 ? (strategy === "mobile" ? "high" : "medium") : "low",
-      title: `${strategy === "mobile" ? "Mobile" : "Desktop"} performance score ${r.performanceScore}/100`,
+      // One title per problem so pages group into a single task; the score is in the evidence.
+      title: `${strategy === "mobile" ? "Mobile" : "Desktop"} performance score below 90`,
       evidence: [
         `Lighthouse ${strategy} performance score: ${r.performanceScore}/100`,
         r.lcpMs != null ? `LCP ${ms(r.lcpMs)}, TBT ${ms(r.tbtMs ?? 0)}, CLS ${(r.cls ?? 0).toFixed(3)}` : "",

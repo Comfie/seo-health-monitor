@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { checkLimits, clientKey } from "@/lib/rate-limit";
 import { listAudits, getFullAudit } from "@/lib/audit/repository";
 import { fetchSnapshot, getSiteConnection } from "@/lib/integrations/search-console/service";
+import { applySearchConsoleToLatestAudit } from "@/lib/audit/index-status";
 
 export const maxDuration = 120;
 
@@ -22,5 +23,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/sites/[id]/
   if (!snapshot || snapshot.status === "error") {
     return NextResponse.json({ error: snapshot?.error ?? "Search Console data could not be fetched." }, { status: 502 });
   }
-  return NextResponse.json({ snapshotId: snapshot.id });
+  // Keep the latest audit's "Google index coverage" check in step with the new data.
+  const auditId = applySearchConsoleToLatestAudit(siteId);
+  return NextResponse.json({ snapshotId: snapshot.id, auditUpdated: auditId });
 }

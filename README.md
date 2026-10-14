@@ -36,7 +36,7 @@ All configuration comes from environment variables, documented in [`.env.example
 - **On-site SEO health score**: weighted from explicit checks (methodology in Settings). It shows **audit coverage**, the share of the scoring model actually measured, and is marked **provisional** when coverage is under 90% or a major category (weighted 15% or more) wasn't measured.
 - **Google search performance** (Search Console): real clicks, impressions, CTR, average position, top queries, top landing pages and URL-inspection index status. Shown separately from the on-site score and never estimated.
 - **PageSpeed Insights**: mobile and desktop lab and field metrics with Lighthouse diagnostics. The API key is sent as a header. 429s are retried with backoff that honours `Retry-After`, and further calls stop once the quota is exhausted. **Re-run PageSpeed tests** re-measures an existing audit and recomputes its scores.
-- **Fix with Claude**: a ready-to-paste prompt for Claude Code built only from verified findings. It includes the detected platform (for example Astro, Next.js or WordPress) with where to look, exact URLs and evidence, guardrails, acceptance criteria and a verification command per task. Available for the whole plan or a single task. Lower-confidence findings are excluded unless you opt in.
+- **Fix with AI**: a ready-to-paste, tool-neutral prompt for any AI coding agent (Claude Code, Codex, Cursor, Copilot…) or a developer, built only from verified findings. It includes the detected platform (for example Astro, Next.js or WordPress) with where to look, exact URLs and evidence, guardrails, acceptance criteria and a verification command per task. Available for the whole plan or a single task. Lower-confidence findings are excluded unless you opt in.
 - **SEO Progress**: on-site health, technical score, detected issues (fixed, new, outstanding) and Search Console metrics between audits, with trend charts. Coverage changes are flagged so a newly measured category isn't mistaken for improvement.
 - **Reports**: PDF, JSON, CSV and Markdown developer tasks, plus a printable report with Developer Fix Instructions.
 - **Compare**: any two scans of a site, with issues matched by deterministic IDs.
@@ -55,7 +55,7 @@ npm run build && npm start     # production server (loads .env.production / .env
 | --- | --- |
 | `npm run dev` | Development server |
 | `npm run build` / `npm start` | Production build / standalone server |
-| `npm test` | Vitest suite (crawler safety, checks, scoring, compare, PageSpeed, Search Console, Fix with Claude, auth/CSRF/rate limits/queue) |
+| `npm test` | Vitest suite (crawler safety, checks, scoring, compare, PageSpeed, Search Console, Fix with AI, auth/CSRF/rate limits/queue) |
 | `npm run lint` / `npm run typecheck` | ESLint / TypeScript |
 | `npm run db:generate` / `npm run db:migrate` | Create / apply Drizzle migrations |
 | `npm run db:backup` | Consistent online backup of the SQLite database |
@@ -70,7 +70,7 @@ src/lib/crawler/              SSRF-safe HTTP client, robots, sitemaps, extractio
 src/lib/audit/                checks/*, scoring + coverage, issue IDs/priority, queue (jobs), runner, compare, progress
 src/lib/performance/          PageSpeed client (retry/backoff) and job runner (quota circuit breaker)
 src/lib/integrations/search-console/  OAuth + Search Console API client, encrypted token storage, snapshots
-src/lib/reports/              action plan, Fix with Claude prompt, CSV/JSON/PDF
+src/lib/reports/              action plan, Fix with AI prompt, CSV/JSON/PDF
 src/lib/security/             crypto (AES-GCM, HKDF, HMAC, PKCE), auth, route guard
 src/lib/rate-limit.ts         SQLite-backed rate limits
 src/app/(app)/                dashboard and feature pages (sidebar layout)

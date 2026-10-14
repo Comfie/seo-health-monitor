@@ -25,7 +25,7 @@ async function ReportsContent({ searchParams }: PageProps<"/reports">) {
       <section className="rounded-xl border bg-card p-6">
         <h2 className="text-lg font-semibold">Audit #{audit.id}</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          PDF for sharing with the business owner, JSON for tooling, CSV for spreadsheets, and a Markdown task list you can paste into Claude Code or a ticket.
+          PDF for sharing with the business owner, JSON for tooling, CSV for spreadsheets, and a Markdown task list you can paste into an AI coding tool or a ticket.
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <Link href={`/audits/${audit.id}/report`} className={buttonVariants({ variant: "secondary" })}>Open detailed report</Link>

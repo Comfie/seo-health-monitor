@@ -188,9 +188,32 @@ export interface CrawlResult {
   notes: string[];
 }
 
+export interface IndexInspection {
+  url: string;
+  verdict: string;
+  coverageState: string | null;
+  indexingState: string | null;
+  robotsTxtState: string | null;
+  pageFetchState: string | null;
+  lastCrawlTime: string | null;
+  googleCanonical: string | null;
+  userCanonical: string | null;
+  error?: string;
+}
+
+/** Search Console state available to the audit. Never feeds scores (index check has weight 0). */
+export interface SearchConsoleContext {
+  configured: boolean;
+  linked: boolean;
+  property?: string;
+  fetchedAt?: Date;
+  inspections?: IndexInspection[];
+}
+
 export interface AuditContext extends CrawlResult {
   performance: PerformanceResult[];
   performanceSkippedReason?: string;
+  searchConsole?: SearchConsoleContext;
 }
 
 export interface IssueDraft {

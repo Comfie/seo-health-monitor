@@ -1,8 +1,9 @@
 import { buildActionPlan, categoryLabel, type ActionItem, type IssueLike } from "./action-plan";
 
 /**
- * "Fix with Claude": turns verified audit findings into a self-contained,
- * implementation-ready prompt for Claude Code (or any developer).
+ * "Fix with AI": turns verified audit findings into a self-contained,
+ * implementation-ready prompt for any AI coding agent (Claude Code, Codex,
+ * Cursor, Copilot…) or a developer. Tool-neutral Markdown on purpose.
  * Deterministic: everything in it comes from the stored audit.
  */
 
@@ -180,7 +181,7 @@ export function buildFixPrompt(issues: IssueLike[], options: FixPromptOptions): 
   out.push(`# Fix verified SEO issues on ${options.siteUrl}`);
   out.push("");
   out.push(
-    `These findings were measured by an automated crawl of the live site on ${date} (SEO Health Monitor audit #${options.auditId}). Each task lists the exact URLs and the evidence collected. They are verified observations, not guesses.`,
+    `These findings were measured by an automated crawl of the live site on ${date} (SEO Health Monitor audit #${options.auditId}). Each task lists the exact URLs and the evidence collected. They are verified observations, not guesses. The tasks are written for whoever implements them: an AI coding agent working in this site's repository, or a developer.`,
   );
   out.push("");
   out.push(

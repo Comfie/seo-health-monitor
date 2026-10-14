@@ -633,21 +633,47 @@ export const technicalChecks: CheckDefinition[] = [
     id: "tech-index-status",
     category: "technical",
     title: "Google index coverage",
-    description: "Whether pages are actually indexed by Google. Requires verified Search Console access.",
+    description: "Google's own index status for crawled pages, from the Search Console URL Inspection API. Shown for information; it does not affect the score.",
     weight: 0,
     template: {
-      title: "",
-      severity: "low",
-      why: "",
-      fix: "",
-      implementation: "",
-      benefit: "",
-      impact: 1,
-      effort: "low",
-      confidence: "low",
+      title: "Google hasn't indexed this page",
+      severity: "medium",
+      why: "A page that isn't in Google's index can't appear in search results at all, however good its content. This status comes directly from Google (URL Inspection), not from a guess.",
+      fix: "Make sure the page is worth indexing, reachable through internal links, listed in the XML sitemap and not blocked; then request indexing in Search Console.",
+      implementation:
+        "1. Confirm the page returns 200, has no noindex and a self-referencing canonical.\n2. Link to it from relevant pages (navigation, category or related-content blocks) so Google sees it as important.\n3. Make sure it is in the XML sitemap and the sitemap is submitted in Search Console (Indexing > Sitemaps).\n4. 'Discovered - currently not indexed' usually means Google deprioritised crawling it: improve unique content and internal links. 'URL is unknown to Google' means Google hasn't found it yet: add links and sitemap entries.\n5. In Search Console, inspect the URL and click 'Request indexing'. Indexing can take days to weeks and is never guaranteed.",
+      benefit: "Pages that get indexed become eligible to appear in Google results; how they rank still depends on relevance and competition.",
+      impact: 4,
+      effort: "medium",
+      confidence: "high",
     },
-    run(): CheckOutcome {
-      return unavailable("Indexing status can only be verified through Google Search Console (not connected). This audit never assumes a page is indexed.");
+    run(ctx): CheckOutcome {
+      const sc = ctx.searchConsole;
+      if (!sc?.configured) return unavailable("Indexing status can only be verified through Google Search Console, which isn't configured. This audit never assumes a page is indexed.");
+      if (!sc.linked) return unavailable("Search Console is connected but not linked to this site. Link the property on the Search Performance page to see Google's index status.");
+      const inspected = (sc.inspections ?? []).filter((i) => !i.error);
+      if (!inspected.length) {
+        const reason = sc.inspections?.find((i) => i.error)?.error;
+        return unavailable(`No URL Inspection results are available for this audit's pages yet${reason ? ` (${reason})` : ""}. Refresh Search Console data to fetch them.`);
+      }
+      const notIndexed = inspected.filter((i) => i.verdict !== "PASS");
+      const when = sc.fetchedAt ? ` (Google URL Inspection, ${sc.fetchedAt.toISOString().slice(0, 10)})` : "";
+      const drafts: IssueDraft[] = notIndexed.map((i) => ({
+        checkId: "tech-index-status",
+        url: i.url,
+        severity: i.verdict === "FAIL" ? "high" : "medium",
+        evidence: [
+          `Google coverage: ${i.coverageState ?? i.verdict}`,
+          i.lastCrawlTime ? `Last crawled by Google: ${i.lastCrawlTime.slice(0, 10)}` : "Google has no record of crawling this URL.",
+          i.robotsTxtState && i.robotsTxtState !== "ALLOWED" ? `robots.txt state: ${i.robotsTxtState}` : "",
+          i.indexingState && i.indexingState !== "INDEXING_ALLOWED" ? `Indexing state: ${i.indexingState}` : "",
+          i.googleCanonical && i.userCanonical && i.googleCanonical !== i.userCanonical ? `Google chose a different canonical: ${i.googleCanonical}` : "",
+        ].filter(Boolean),
+      }));
+      const indexed = inspected.length - notIndexed.length;
+      const summary = `${indexed} of ${plural(inspected.length, "inspected page")} are indexed by Google${when}.`;
+      // Informational: weight 0 and score null keep Search Console data out of the on-site score.
+      return { status: notIndexed.length ? "warning" : "pass", score: null, summary, drafts };
     },
   },
 ];

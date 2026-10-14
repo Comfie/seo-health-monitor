@@ -159,3 +159,48 @@ describe("fillDailySeries", () => {
     expect(filled[0].position).toBeNull();
   });
 });
+
+describe("Google index coverage check", () => {
+  it("reports Google's real index status on the audit and never changes the score", async () => {
+    vi.stubGlobal("fetch", fakeGoogle());
+    const { applySearchConsoleToAudit } = await import("@/lib/audit/index-status");
+    const db = getDb();
+    const site = db.insert(schema.sites).values({ host: "index.example.com", displayUrl: "https://index.example.com/" }).returning().get();
+    const audit = db.insert(schema.audits).values({ siteId: site.id, inputUrl: "x", startUrl: "x", status: "completed", completedAt: new Date(), overallScore: 80, categoryScores: { technical: 80 }, counts: {} }).returning().get();
+    for (const url of ["https://index.example.com/", "https://index.example.com/a"]) {
+      db.insert(schema.pages).values({ auditId: audit.id, url, finalUrl: url, status: 200, depth: 0, source: "start", data: {} }).run();
+    }
+    db.insert(schema.checks).values({ auditId: audit.id, checkId: "onpage-title", category: "technical", title: "t", description: "d", status: "pass", score: 0.8, weight: 1, summary: "s" }).run();
+    const check = () => db.select().from(schema.checks).all().find((c) => c.auditId === audit.id && c.checkId === "tech-index-status");
+
+    // Linked to nothing yet: says so plainly.
+    applySearchConsoleToAudit(audit.id);
+    expect(check()?.status).toBe("unavailable");
+    expect(check()?.summary).toMatch(/not (linked|configured|connected)/i);
+
+    // Connected + linked + snapshot with one indexed and one unknown page.
+    await service.completeConnection("code", "verifier");
+    await service.linkProperty(site.id, "sc-domain:example.com");
+    const inspect = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("urlInspection")) {
+        const page = JSON.parse(String(init?.body)).inspectionUrl as string;
+        const r = page.endsWith("/a") ? { verdict: "NEUTRAL", coverageState: "URL is unknown to Google" } : { verdict: "PASS", coverageState: "Submitted and indexed", lastCrawlTime: "2026-10-01T00:00:00Z" };
+        return new Response(JSON.stringify({ inspectionResult: { indexStatusResult: r } }), { status: 200 });
+      }
+      return fakeGoogle()(input, init);
+    });
+    vi.stubGlobal("fetch", inspect);
+    await service.fetchSnapshot(site.id, { pageUrls: ["https://index.example.com/", "https://index.example.com/a"] });
+    applySearchConsoleToAudit(audit.id);
+
+    expect(check()).toMatchObject({ status: "warning", weight: 0, score: null });
+    expect(check()?.summary).toMatch(/^1 of 2 inspected pages are indexed by Google/);
+    const issues = db.select().from(schema.issues).all().filter((i) => i.auditId === audit.id);
+    expect(issues.map((i) => i.url)).toEqual(["https://index.example.com/a"]);
+    expect(issues[0].evidence[0]).toBe("Google coverage: URL is unknown to Google");
+    // Weight 0: the on-site score is untouched.
+    expect(db.select().from(schema.audits).all().find((a) => a.id === audit.id)?.overallScore).toBe(80);
+    vi.unstubAllGlobals();
+  });
+});

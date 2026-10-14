@@ -51,7 +51,7 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   {
     label: "Output",
     items: [
-      { href: "/fix", label: "Fix with Claude", icon: Sparkles, auditScoped: true },
+      { href: "/fix", label: "Fix with AI", icon: Sparkles, auditScoped: true },
       { href: "/reports", label: "Reports", icon: FileText, auditScoped: true },
       { href: "/settings", label: "Settings", icon: Settings },
     ],
