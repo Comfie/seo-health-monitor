@@ -11,7 +11,7 @@ import { DisconnectGoogleButton, PropertyLinker, RefreshSnapshotButton } from "@
 import { TrendChart } from "@/components/app/trend-chart";
 import { formatDate, shortUrl } from "@/components/app/format";
 import { listAudits, listSites } from "@/lib/audit/repository";
-import { suggestProperty } from "@/lib/integrations/search-console/google";
+import { fillDailySeries, suggestProperty } from "@/lib/integrations/search-console/google";
 import {
   availableProperties,
   getGoogleAccount,
@@ -43,8 +43,8 @@ function Delta({ current, previous, lowerIsBetter = false, format }: { current: 
   );
 }
 
-function RowsTable({ rows, keyLabel, isUrl }: { rows: NonNullable<SnapshotRow["topQueries"]>; keyLabel: string; isUrl?: boolean }) {
-  if (!rows.length) return <p className="rounded-lg border bg-card px-4 py-4 text-sm text-muted-foreground">Google reported no data for this period.</p>;
+function RowsTable({ rows, keyLabel, isUrl, emptyText = "Google reported no data for this period." }: { rows: NonNullable<SnapshotRow["topQueries"]>; keyLabel: string; isUrl?: boolean; emptyText?: string }) {
+  if (!rows.length) return <p className="rounded-lg border bg-card px-4 py-4 text-sm text-muted-foreground">{emptyText}</p>;
   return (
     <div className="rounded-lg border bg-card">
       <Table>
@@ -250,7 +250,7 @@ async function SearchConsoleContent({ searchParams }: PageProps<"/search-console
                 )}
               </Section>
 
-              {snapshot?.daily && snapshot.daily.length > 1 && (
+              {snapshot?.daily && snapshot.daily.length > 0 && (
                 <Section title="Daily trend" description="Clicks and impressions use different scales, so each has its own chart.">
                   <div className="grid gap-4 lg:grid-cols-2">
                     {([["clicks", "Clicks per day", "#2a78d6"], ["impressions", "Impressions per day", "#11a094"]] as const).map(([key, title, color]) => (
@@ -258,11 +258,11 @@ async function SearchConsoleContent({ searchParams }: PageProps<"/search-console
                         <h3 className="mb-2 text-sm font-semibold">{title}</h3>
                         <TrendChart
                           ariaLabel={`${title} from ${snapshot.startDate} to ${snapshot.endDate}`}
-                          data={snapshot.daily!.map((d) => ({ label: d.date.slice(5), [key]: d[key] }))}
+                          data={fillDailySeries(snapshot.daily!, snapshot.startDate, snapshot.endDate).map((d) => ({ label: d.date.slice(5), [key]: d[key] }))}
                           series={[{ key, name: title, color }]}
                           height={200}
                           yDomain={[0, "auto"]}
-                          format={fmtInt}
+                          valueFormat="integer"
                         />
                       </div>
                     ))}
@@ -273,7 +273,11 @@ async function SearchConsoleContent({ searchParams }: PageProps<"/search-console
               {snapshot && (
                 <div className="grid gap-x-6 lg:grid-cols-2">
                   <Section title="Top search queries">
-                    <RowsTable rows={snapshot.topQueries ?? []} keyLabel="Query" />
+                    <RowsTable
+                      rows={snapshot.topQueries ?? []}
+                      keyLabel="Query"
+                      emptyText={(snapshot.impressions ?? 0) > 0 ? "Google returned no query rows. It hides rarely searched (anonymised) queries for privacy, which is common when impressions are low; the totals above still include them." : "No search impressions in this period."}
+                    />
                   </Section>
                   <Section title="Top landing pages">
                     <RowsTable rows={snapshot.topPages ?? []} keyLabel="Page" isUrl />

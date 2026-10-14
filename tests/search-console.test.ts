@@ -150,3 +150,12 @@ describe("Search Console service", () => {
     expect(service.getSiteConnection(siteId)).toBeNull();
   });
 });
+
+describe("fillDailySeries", () => {
+  it("fills days Google omitted with zeros across the whole window", () => {
+    const filled = google.fillDailySeries([{ date: "2026-10-10", clicks: 1, impressions: 2, ctr: 0.5, position: 1.5 }], "2026-10-08", "2026-10-11");
+    expect(filled.map((d) => d.date)).toEqual(["2026-10-08", "2026-10-09", "2026-10-10", "2026-10-11"]);
+    expect(filled.map((d) => d.impressions)).toEqual([0, 0, 2, 0]);
+    expect(filled[0].position).toBeNull();
+  });
+});

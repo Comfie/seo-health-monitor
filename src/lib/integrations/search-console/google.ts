@@ -206,3 +206,22 @@ export function reportingWindow(days: number, today = new Date()): { current: { 
   prevStart.setUTCDate(prevEnd.getUTCDate() - (days - 1));
   return { current: { startDate: iso(start), endDate: iso(end) }, previous: { startDate: iso(prevStart), endDate: iso(prevEnd) } };
 }
+
+/**
+ * Search Analytics omits days with no impressions. Fill every day in the window
+ * so charts show the real timeline; a missing day genuinely means zero.
+ */
+export function fillDailySeries<T extends { date: string; clicks: number; impressions: number }>(
+  rows: T[],
+  startDate: string,
+  endDate: string,
+): { date: string; clicks: number; impressions: number; ctr: number; position: number | null }[] {
+  const byDate = new Map(rows.map((r) => [r.date, r]));
+  const out: { date: string; clicks: number; impressions: number; ctr: number; position: number | null }[] = [];
+  for (let d = new Date(`${startDate}T00:00:00Z`); d <= new Date(`${endDate}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + 1)) {
+    const key = d.toISOString().slice(0, 10);
+    const row = byDate.get(key) as (T & { ctr?: number; position?: number }) | undefined;
+    out.push(row ? { date: key, clicks: row.clicks, impressions: row.impressions, ctr: row.ctr ?? 0, position: row.position ?? null } : { date: key, clicks: 0, impressions: 0, ctr: 0, position: null });
+  }
+  return out;
+}

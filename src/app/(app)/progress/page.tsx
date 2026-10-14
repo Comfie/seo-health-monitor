@@ -145,7 +145,7 @@ async function ProgressContent(props: PageProps<"/progress">) {
             {([["clicks", "Clicks (28 days)", "#2a78d6", false], ["impressions", "Impressions (28 days)", "#11a094", false], ["position", "Average position (lower is better)", "#4a3aa7", true]] as const).map(([key, title, color, reversed]) => (
               <div key={key} className="rounded-lg border bg-card p-4">
                 <h3 className="mb-2 text-sm font-semibold">{title}</h3>
-                <TrendChart ariaLabel={title} data={searchData.map((d) => ({ label: d.label, [key]: d[key] }))} series={[{ key, name: title, color }]} height={180} reversed={reversed} format={(v) => (key === "position" ? v.toFixed(1) : Math.round(v).toLocaleString("en-GB"))} />
+                <TrendChart ariaLabel={title} data={searchData.map((d) => ({ label: d.label, [key]: d[key] }))} series={[{ key, name: title, color }]} height={180} reversed={reversed} valueFormat={key === "position" ? "decimal1" : "integer"} />
               </div>
             ))}
           </div>
