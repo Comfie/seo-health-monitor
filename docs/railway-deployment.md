@@ -1,6 +1,6 @@
 # Railway deployment — private single-owner release
 
-Prepared from `origin/main` at `5ea8778`, not either platform migration branch. Nothing has been pushed or deployed. Read [compatibility and test report](railway-compatibility.md) and [future architecture and costs](railway-saas-roadmap.md) before release.
+Prepared from `origin/main` at `5ea8778`, not either platform migration branch. The branch has been pushed to GitHub; deployment is performed by the owner in Railway. Read [compatibility and test report](railway-compatibility.md) and [future architecture and costs](railway-saas-roadmap.md) before release.
 
 ## Architecture and prerequisites
 
@@ -19,10 +19,10 @@ The private test env file needs `APP_SECRET` (32+ random characters), `AUTH_PASS
 
 ## Create the project (after explicit push/deployment approval)
 
-1. Approve pushing the prepared local branch first. The eventual command is `git push -u origin railway-deployment`; it has NOT been run.
+1. The prepared branch is available on GitHub as `railway-deployment`. Select it explicitly below.
 2. In Railway, create an **Empty Project**. Select Hobby in your workspace billing settings only when you intend to authorise payment. No live billing account was connected during preparation.
 3. Add a service, connect GitHub repository `Comfie/seo-health-monitor`, and in **Settings → Source** select branch `railway-deployment`, root directory `/`. Pause automatic deployments until variables and the volume are configured. GitHub selection can trigger a first build; an unconfigured runtime will fail closed.
-4. **Settings → Build**: use the repository `Dockerfile` (Dockerfile path `Dockerfile`). Build command is supplied by the image: `npm ci`, then `npm run build`. Do not override it with Railpack.
+4. The Dockerfile deliberately contains no `VOLUME` instruction: Railway rejects it. Attach the persistent volume in the dashboard instead. **Settings → Build**: use the repository `Dockerfile` (Dockerfile path `Dockerfile`). Build command is supplied by the image: `npm ci`, then `npm run build`. Do not override it with Railpack.
 5. **Settings → Deploy**: leave Start Command empty to retain the image entrypoint/CMD. Set Healthcheck Path `/api/health`, timeout **300 seconds**, restart **On Failure**, max retries **10**, draining time **30 seconds**, overlap **0**, replicas **1**, one region. Start with replica limits **1 vCPU / 1 GB RAM**, then measure real audits. Disable Serverless/app sleeping and cron scheduling on this service: queued work needs a live process.
 6. Add a volume from the service/project canvas (**Add Volume**, attach to the application service); mount at `/data`. Hobby normally defaults to 5 GB capacity; billing is for used storage. Set `DATABASE_PATH=/data/seo-health.db`.
 7. Configure variables below. Railway automatically supplies PORT and volume metadata. Never run migrations in a build or pre-deploy command: those stages cannot access the volume. Leave Pre-deploy Command empty.
