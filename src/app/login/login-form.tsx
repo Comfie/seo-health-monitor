@@ -6,14 +6,28 @@ import { Loader2, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+/**
+ * Post-login destination: must resolve to this origin. Rejects absolute,
+ * protocol-relative and backslash tricks like "/\\evil.com" that browsers
+ * normalise to "//evil.com".
+ */
+export function safeNext(next: string | null, origin = typeof window === "undefined" ? "http://localhost" : window.location.origin): string {
+  if (!next || !next.startsWith("/") || next.includes("\\")) return "/";
+  try {
+    const url = new URL(next, origin);
+    return url.origin === origin ? `${url.pathname}${url.search}${url.hash}` : "/";
+  } catch {
+    return "/";
+  }
+}
+
 export function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const next = params.get("next");
-  const target = next && /^\/(?!\/)/.test(next) ? next : "/";
+  const target = safeNext(params.get("next"));
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
