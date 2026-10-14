@@ -91,7 +91,7 @@ describe("login redirect target", () => {
     const { safeNext } = await import("@/app/login/login-form");
     const origin = "https://seo.example.com";
     expect(safeNext("/technical?audit=2", origin)).toBe("/technical?audit=2");
-    for (const bad of ["//evil.com", "/\\evil.com", "/\\/evil.com", "https://evil.com", "javascript:alert(1)", "", null]) {
+    for (const bad of ["//evil.com", "/.//evil.com", "/a/..//evil.com", "/%2e//evil.com", "/\\evil.com", "/\\/evil.com", "https://evil.com", "javascript:alert(1)", "", null]) {
       expect(safeNext(bad, origin)).toBe("/");
     }
   });
