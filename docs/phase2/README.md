@@ -1,6 +1,6 @@
 # Phase 2 implementation ledger
 
-Updated 15 October 2026 (Africa/Johannesburg). Stages 1 (foundation), 2 (customer onboarding and website management) and 3 (multi-tenant audit engine) are implemented on `phase2-multiuser`. Stage 4A has an approved Railway beta deployment and a verified administrator operator account; the customer A/B journey remains pending G4. This is **not a completed SaaS**. No monetisation is included. Phase 1's service and data remain unchanged; nothing was pushed or committed; no external tester was invited; unrestricted public registration does not exist.
+Updated 15 October 2026 (Africa/Johannesburg). Stages 1 (foundation), 2 (customer onboarding and website management) and 3 (multi-tenant audit engine) are implemented on `phase2-multiuser`. The approved controlled G4 A/B run passed **229 hosted checks and 25 browser checks**, with **211 local tests**, type checking and lint passing. Source and evidence are committed on this branch; nothing was pushed or merged into production. This is **not a completed SaaS or an external beta approval**. No monetisation is included. Phase 1's service and data remain unchanged; no external tester was invited; unrestricted public registration does not exist.
 
 ## Stage 4A: Railway staging preparation (in progress)
 
