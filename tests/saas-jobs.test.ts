@@ -368,7 +368,7 @@ describe("quotas and provider budgets", () => {
     expect((await service.status(audit)).pagespeedRerun).toBeNull();
   });
 
-  it("budgets AI consultant reports per account and reuses the stored report", async () => {
+  it("budgets AI consultant reports per account and gives each audit one report", async () => {
     const audit = await start(alice, aliceSite);
     await executeJob(deps(), (await claimJob(db, "w1", settings, timing, now()))!, control());
     await db.update(saasSchema.tenants).set({ monthlyAiLimit: 1 }).where(eq(saasSchema.tenants.id, alice.tenantId));
@@ -376,10 +376,26 @@ describe("quotas and provider budgets", () => {
     let calls = 0;
     const generate = async () => { calls++; return { report: "## Summary\nok", model: "test-model" }; };
     expect(await service.consultantReport(audit, generate, { now: now() })).toMatchObject({ cached: false });
-    expect(await service.consultantReport(audit, generate, { now: now() })).toMatchObject({ cached: true });
     advance(3 * 60_000);
-    await expect(service.consultantReport(audit, generate, { regenerate: true, now: now() })).rejects.toThrow(/monthly AI report allowance/);
+    expect(await service.consultantReport(audit, generate, { now: now() })).toMatchObject({ cached: true });
     expect(calls).toBe(1);
+  });
+
+  it("caps shared AI spend per day in dollars and records each report's real cost", async () => {
+    settings = base({ aiMicrosPerDay: 150_000 });
+    const first = await start(alice, aliceSite);
+    await executeJob(deps(), (await claimJob(db, "w1", settings, timing, now()))!, control());
+    const service = customerAudits(db, alice, settings);
+    expect(await service.consultantReport(first, async () => ({ report: "ok", model: "m", costMicros: 40_000 }), { now: now() })).toMatchObject({ cached: false });
+    const [row] = await db.select().from(saasSchema.usageRecords).where(and(eq(saasSchema.usageRecords.tenantId, alice.tenantId), eq(saasSchema.usageRecords.kind, "ai")));
+    expect(row.costMicros).toBe(40_000);
+    // $0.04 spent: a new report still fits under the $0.10 hold, then the day is over budget.
+    const second = await start(alice, aliceSite);
+    await executeJob(deps(), (await claimJob(db, "w1", settings, timing, now()))!, control());
+    expect(await service.consultantReport(second, async () => ({ report: "ok", model: "m", costMicros: 70_000 }), { now: now() })).toMatchObject({ cached: false });
+    const third = await start(alice, aliceSite);
+    await executeJob(deps(), (await claimJob(db, "w1", settings, timing, now()))!, control());
+    await expect(service.consultantReport(third, async () => ({ report: "ok", model: "m", costMicros: 1 }), { now: now() })).rejects.toThrow(/shared daily AI report budget/);
   });
 
   it("returns the AI allowance when the provider fails to produce a report", async () => {

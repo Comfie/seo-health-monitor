@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { config } from "@/lib/config";
 import type { FullAudit } from "@/lib/audit/repository";
 import type { ReportSearchConsole } from "@/lib/reports/search-summary";
+import { costMicros } from "./pricing";
 
 export class AiUnavailableError extends Error {}
 
@@ -88,7 +89,7 @@ export function isAiConfigured(): boolean {
 /** Optional owner-authorised data; Phase 1 passes none. */
 export type ConsultantExtras = { searchConsole?: ReportSearchConsole };
 
-export async function generateConsultantReport(full: FullAudit, extras: ConsultantExtras = {}): Promise<{ report: string; model: string }> {
+export async function generateConsultantReport(full: FullAudit, extras: ConsultantExtras = {}): Promise<{ report: string; model: string; costMicros: number }> {
   if (!config.anthropicApiKey) throw new AiUnavailableError("Set ANTHROPIC_API_KEY to enable the AI SEO Consultant.");
   const client = new Anthropic({ apiKey: config.anthropicApiKey, timeout: 5 * 60_000 });
 
@@ -119,7 +120,7 @@ export async function generateConsultantReport(full: FullAudit, extras: Consulta
       .trim();
     if (!text) throw new AiUnavailableError("The AI model returned an empty response.");
     const truncated = message.stop_reason === "max_tokens" ? "\n\n_(Report truncated at the length limit.)_" : "";
-    return { report: text + truncated, model: message.model };
+    return { report: text + truncated, model: message.model, costMicros: costMicros(message.usage, config.aiModel, message.model) };
   } catch (err) {
     if (err instanceof AiUnavailableError) throw err;
     if (err instanceof Anthropic.AuthenticationError) throw new AiUnavailableError("The Anthropic API key was rejected. Check ANTHROPIC_API_KEY.");

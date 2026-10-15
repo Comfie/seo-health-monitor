@@ -45,7 +45,8 @@ Variables are set per service in Railway. Both services need the shared database
 | `PHASE2_LIMIT_*`, `PHASE2_GLOBAL_*` | Optional limit overrides. Defaults are in `src/lib/saas/limits.ts` and summarised in [STATUS.md](STATUS.md#limits-per-tester-account-code-defaults). |
 | `PHASE2_WORKER_CONCURRENCY` (worker) | Jobs per worker process (1) |
 | `PHASE2_PRIVACY_CONTACT_EMAIL` | Contact shown on the privacy, terms and data-use pages (`comfynyatsine@gmail.com`) |
-| `ANTHROPIC_API_KEY`, `AI_MODEL` | Optional AI consultant (off) |
+| `PHASE2_GLOBAL_AI_USD_PER_DAY` | Shared daily AI spend cap in US dollars (default `1`, unset in production). Prices per model live in `src/lib/ai/pricing.ts`; update them if Anthropic changes its prices. |
+| `ANTHROPIC_API_KEY`, `AI_MODEL` | AI consultant, on the web service only. `AI_MODEL=claude-sonnet-5-5` (about $0.05 per report); set `claude-opus-5-5` for higher quality at roughly twice the cost. Changing either redeploys the service. |
 
 Startup refuses unsafe combinations, for example open registration, a non-HTTPS origin, reused secrets, or `AUTH_DISABLED`.
 
@@ -62,9 +63,9 @@ Startup refuses unsafe combinations, for example open registration, a non-HTTPS 
 2. Take a backup (below).
 3. Apply the migration with the operator login before deploying code that needs it:
    ```sh
-   STAGING_DATABASE_URL=<postgres public URL> PHASE2_DATABASE_PURPOSE=staging npm run db:saas:staging migrate
+   STAGING_DATABASE_URL=<postgres public URL> PHASE2_DATABASE_PURPOSE=staging npm run db:saas:staging migrate -- --confirm-staging=<host>/<database>
    ```
-   The `staging` label is a guard name in the script, not a separate database. Migrations never run automatically on startup.
+   The `staging` label and `--confirm-staging` (the URL's hostname and path, e.g. `example.proxy.rlwy.net/railway`) are guards in the script, not a separate database. Run `check` the same way before and after to compare the migration count. Migrations never run automatically on startup.
 4. Deploy the web app and worker.
 
 Prefer additive migrations: new tables and nullable columns.
@@ -113,7 +114,7 @@ There are no automatic backups yet. Until there are:
 | Worker heartbeat | Missing for 90 seconds |
 | Oldest queued audit | Over 10 minutes old |
 | Final audit failures | 3 or more in 24 hours |
-| PageSpeed or AI usage | 80% of the daily cap |
+| PageSpeed tests or AI spend | 80% of the daily cap |
 
 ## Common tasks
 

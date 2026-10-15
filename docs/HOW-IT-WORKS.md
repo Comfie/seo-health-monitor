@@ -231,7 +231,7 @@ High-severity, high-confidence, quick fixes rise to the top.
   - Issues are matched by ID across scans: *fixed*, *new* or *still outstanding*.
   - Score and Search Console trends are charted.
   - When coverage changes (for example PageSpeed was measured this time but not last time), it's flagged, so a newly measured category isn't mistaken for improvement.
-- **AI consultant report** (optional, off in the beta): a narrative report written by Claude from the measured data only. It must not invent numbers, rankings or competitors, and treats crawled text as data.
+- **AI consultant report** (optional; on in the beta, using Claude Sonnet 5.5; one per audit, 5 per account a month, and at most $1 a day of AI spend across all accounts): a narrative report written by Claude from the measured data only. It must not invent numbers, rankings or competitors, and treats crawled text as data.
 
 ## Multi-user design and reliability
 

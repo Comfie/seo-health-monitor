@@ -4,7 +4,7 @@ import type { SaasDb } from './db';
 import { assertAdministrator } from './administration';
 import { jobs, operationalEvents, systemHeartbeats } from './operations-schema';
 import { searchConsoleJobs } from './schema';
-import { dayStart, monthStart, readLimitSettings, usedUnits, type LimitSettings } from './limits';
+import { dayStart, monthStart, readLimitSettings, spentMicros, usedUnits, type LimitSettings } from './limits';
 
 export async function operationsSnapshot(db: SaasDb, actorId: string, settings: LimitSettings = readLimitSettings(), now = new Date()) {
   await assertAdministrator(db, actorId);
@@ -16,11 +16,12 @@ export async function operationsSnapshot(db: SaasDb, actorId: string, settings: 
       lastFinishedAt: sql<string | null>`max(${table.finishedAt})`}).from(table);
     return r;
   };
-  const [audits, searchConsole, beats, events, daily, monthly] = await Promise.all([
+  const [audits, searchConsole, beats, events, daily, monthly, aiSpentToday] = await Promise.all([
     aggregate(jobs), aggregate(searchConsoleJobs), db.select().from(systemHeartbeats),
     db.select({kind: operationalEvents.kind, count: count()}).from(operationalEvents).where(gte(operationalEvents.createdAt, new Date(now.getTime()-86400_000))).groupBy(operationalEvents.kind),
     Promise.all((['audit','pagespeed','ai'] as const).map(async kind=>({kind,units:await usedUnits(db,{kind,since:dayStart(now)})}))),
     Promise.all((['audit','pagespeed','ai'] as const).map(async kind=>({kind,units:await usedUnits(db,{kind,since:monthStart(now)})}))),
+    spentMicros(db, dayStart(now)),
   ]);
   const fresh = (role: string) => beats.some(b => b.role===role && now.getTime()-b.lastSeenAt.getTime()<90_000);
   const failures = Object.fromEntries(events.map(e=>[e.kind,e.count]));
@@ -37,11 +38,11 @@ export async function operationsSnapshot(db: SaasDb, actorId: string, settings: 
   add(queued>0 && now.getTime()-lastProgress>10*60_000, 'no_progress', 'The queue has work but no completion for ten minutes.');
   add((failures['audit.failed']??0)>=3, 'repeated_audit_failures', 'Three or more audits failed in the last 24 hours.');
   add((failures['database.failure']??0)>0, 'database_failures', 'Database failures recorded. Check Railway structured logs for outages during which events could not be persisted.');
-  for(const [kind,cap] of [['pagespeed',settings.global.pagespeedPerDay],['ai',settings.global.aiPerDay]] as const) {
-    add(cap>0 && (daily.find(x=>x.kind===kind)?.units??0)>=cap*.8, `${kind}_budget`, `${kind} has used at least 80% of the daily budget.`);
-  }
+  const pagespeedCap = settings.global.pagespeedPerDay, aiCap = settings.global.aiMicrosPerDay;
+  add(pagespeedCap>0 && (daily.find(x=>x.kind==='pagespeed')?.units??0)>=pagespeedCap*.8, 'pagespeed_budget', 'pagespeed has used at least 80% of the daily budget.');
+  add(aiCap>0 && aiSpentToday>=aiCap*.8, 'ai_budget', 'AI has used at least 80% of the daily spending budget.');
   const finished=audits.completed+audits.failed;
   return {checkedAt: now.toISOString(), webHealthy: fresh('web'), workerHealthy: fresh('worker'), queues: {audits,searchConsole}, rates: {completion: finished ? audits.completed/finished : null, failure: finished ? audits.failed/finished : null}, failuresLast24Hours: failures,
-    usage: {daily,monthly, caps: settings.global}, alerts,
+    usage: {daily,monthly, aiSpentTodayMicros: aiSpentToday, caps: settings.global}, alerts,
     note: 'Rates cover retained jobs. Usage counts retained reservations plus anonymous deleted-account daily totals, not provider billing. Database failures during outages are available in structured Railway logs; the database cannot record its own outage.'};
 }

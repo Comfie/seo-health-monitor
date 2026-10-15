@@ -55,6 +55,8 @@ export const usageRecords = pgTable("usage_records", {
   auditId: integer("audit_id").notNull(),
   kind: text("kind", { enum: ["audit", "pagespeed", "ai"] }).notNull().default("audit"),
   units: integer("units").notNull().default(1),
+  /** AI only: provider cost in micro-dollars, an estimate while the report is generating. */
+  costMicros: integer("cost_micros"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   index("usage_month_idx").on(t.tenantId, t.createdAt),

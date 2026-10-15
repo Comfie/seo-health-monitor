@@ -16,7 +16,7 @@
 | Accounts | The owner (`comfynyatsine@gmail.com`) is the only administrator. Everyone else joins by invitation. |
 | Email | Resend, sent from `SEO Health Monitor <seo-beta@dominiondesk.com>`. Invitations go to any address an administrator enters. |
 | Google | The existing OAuth client and PageSpeed key are reused. The Search Console callback is `https://seo-health-monitor-production.up.railway.app/api/integrations/google/callback`. |
-| AI consultant | Off (no `ANTHROPIC_API_KEY`). **Fix with AI** works without it, because it produces instructions rather than calling a model. |
+| AI consultant | **On since 15 October.** Uses Claude Sonnet 5.5 (`AI_MODEL=claude-sonnet-5-5`) on the web service only; the worker never calls AI. A live test report cost about $0.05 (Anthropic Console). **Fix with AI** is separate: it produces instructions and never calls a model. |
 
 ### Limits per tester account (code defaults)
 
@@ -27,9 +27,9 @@
 | Pages per audit | 25 |
 | Audits running at once | 1 |
 | PageSpeed tests per month | 60. Each audit tests 3 pages on mobile and desktop, so 6 per audit. |
-| AI reports per month | 5 (unused while AI is off) |
+| AI reports per month | 5. Each audit gets one report (no regenerating); viewing it again is free, and a failed generation is refunded. |
 
-The whole system runs at most 2 audits at once, queues up to 50, and allows 400 PageSpeed tests a day. Administrators can override limits per account under **Admin**.
+The whole system runs at most 2 audits at once, queues up to 50, allows 400 PageSpeed tests a day, and caps AI spend at **$1 a day** across all accounts (`PHASE2_GLOBAL_AI_USD_PER_DAY`), roughly 20 reports at about $0.05 each. Each report's real cost is calculated from the tokens it used; a report being written counts as $0.10 until it finishes, so a new one starts only while at least $0.10 of the day's budget is left. Admin → Operations shows today's AI spend. Administrators can override limits per account under **Admin**.
 
 ## Before inviting testers widely
 
@@ -42,7 +42,7 @@ The whole system runs at most 2 audits at once, queues up to 50, and allows 400 
 ## Later
 
 - Send email from the product's own domain instead of `dominiondesk.com`.
-- Enable the AI consultant (`ANTHROPIC_API_KEY`) if wanted. Each account's monthly AI allowance applies.
+- Set a monthly spending limit and alerts in the Anthropic Console. The app's caps limit report counts, not dollars.
 - Retention clean-up is built but switched off pending a policy decision.
 - Development dependencies: `npm audit` flagged development-only advisories (October 2026). Review them before a public launch.
 - Have the Privacy Policy, Terms of Use and data-use pages reviewed by a lawyer before a public launch. They were rewritten for testers on 15 October; the contact is comfynyatsine@gmail.com.

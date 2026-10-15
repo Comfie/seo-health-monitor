@@ -36,6 +36,13 @@
       "when": 1792050559947,
       "tag": "0004_g6_operations",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792072689272,
+      "tag": "0005_ai_cost",
+      "breakpoints": true
     }
   ]
 }

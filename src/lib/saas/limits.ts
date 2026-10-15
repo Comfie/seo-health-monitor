@@ -26,8 +26,8 @@ export type GlobalLimits = {
   maxQueued: number;
   /** PageSpeed tests per UTC day across all accounts (protects the shared Google API key). */
   pagespeedPerDay: number;
-  /** AI consultant calls per UTC day across all accounts. */
-  aiPerDay: number;
+  /** AI consultant spend per UTC day across all accounts, in micro-dollars (1,000,000 = $1). */
+  aiMicrosPerDay: number;
   /** PageSpeed sample: URLs tested per audit (each URL is tested on mobile and desktop). */
   pagespeedPagesPerAudit: number;
 };
@@ -50,6 +50,11 @@ function intSetting(env: Env, name: string, fallback: number, bounds: [number, n
   return clamp(Number.isFinite(parsed) ? parsed : fallback, bounds);
 }
 
+function dollarSetting(env: Env, name: string, fallback: number, [min, max]: [number, number]) {
+  const parsed = Number.parseFloat(env[name]?.trim() ?? "");
+  return Math.round(Math.min(max, Math.max(min, Number.isFinite(parsed) ? parsed : fallback)) * 1_000_000);
+}
+
 type Env = Record<string, string | undefined>;
 
 export function readLimitSettings(env: Env = process.env): LimitSettings {
@@ -66,7 +71,7 @@ export function readLimitSettings(env: Env = process.env): LimitSettings {
       maxRunning: intSetting(env, "PHASE2_GLOBAL_MAX_RUNNING", 2, [1, 20]),
       maxQueued: intSetting(env, "PHASE2_GLOBAL_MAX_QUEUED", 50, [1, 1000]),
       pagespeedPerDay: intSetting(env, "PHASE2_GLOBAL_PAGESPEED_PER_DAY", 400, [0, 25_000]),
-      aiPerDay: intSetting(env, "PHASE2_GLOBAL_AI_PER_DAY", 50, [0, 5000]),
+      aiMicrosPerDay: dollarSetting(env, "PHASE2_GLOBAL_AI_USD_PER_DAY", 1, [0, 500]),
       pagespeedPagesPerAudit: intSetting(env, "PHASE2_PAGESPEED_PAGES_PER_AUDIT", 3, [0, 10]),
     },
   };
@@ -113,6 +118,21 @@ export async function usedUnits(tx: Tx | SaasDb, where: { tenantId?: string; kin
   return Number(row?.n ?? 0) + Number(archived?.n ?? 0);
 }
 
+/** AI spend in micro-dollars across all accounts, including deleted accounts' anonymised totals. */
+export async function spentMicros(tx: Tx | SaasDb, since: Date) {
+  const [row] = await tx.select({ n: sql<string>`coalesce(sum(${usageRecords.costMicros}),0)` }).from(usageRecords)
+    .where(and(eq(usageRecords.kind, "ai"), gte(usageRecords.createdAt, since)));
+  const [archived] = await tx.select({ n: sql<string>`coalesce(sum((${activity.metadata}->>'costMicros')::bigint),0)` }).from(activity)
+    .where(and(eq(activity.action, 'usage.anonymised'), sql`${activity.metadata}->>'kind' = 'ai'`, gte(activity.createdAt, since)));
+  return Number(row?.n ?? 0) + Number(archived?.n ?? 0);
+}
+
+/**
+ * Held against the daily AI budget while a report is generating, then replaced by the real
+ * cost. A typical Sonnet report costs about $0.05; a maximum-length one about $0.25.
+ */
+export const AI_RESERVATION_MICROS = 100_000;
+
 export class BudgetExhaustedError extends Error {}
 
 /**
@@ -128,19 +148,25 @@ export async function reserveUsage(db: SaasDb, input: { tenantId: string; auditI
     if (!tenant) throw new BudgetExhaustedError("This account is not active.");
     const limits = effectiveLimits(tenant, input.settings);
     const monthly = input.kind === "pagespeed" ? limits.pagespeedPerMonth : limits.aiPerMonth;
-    const daily = input.kind === "pagespeed" ? input.settings.global.pagespeedPerDay : input.settings.global.aiPerDay;
     const label = input.kind === "pagespeed" ? "PageSpeed test" : "AI report";
     if ((await usedUnits(tx, { tenantId: tenant.id, kind: input.kind, since: monthStart(now) })) + units > monthly) {
       throw new BudgetExhaustedError(`This account's monthly ${label} allowance (${monthly}) has been used.`);
     }
     await advisoryLock(tx, LOCK_BUDGET[input.kind]);
-    if ((await usedUnits(tx, { kind: input.kind, since: dayStart(now) })) + units > daily) {
-      throw new BudgetExhaustedError(`The beta's shared daily ${label} budget has been used. Try again tomorrow.`);
-    }
+    const overDaily = input.kind === "ai"
+      ? (await spentMicros(tx, dayStart(now))) + AI_RESERVATION_MICROS > input.settings.global.aiMicrosPerDay
+      : (await usedUnits(tx, { kind: input.kind, since: dayStart(now) })) + units > input.settings.global.pagespeedPerDay;
+    if (overDaily) throw new BudgetExhaustedError(`The beta's shared daily ${label} budget has been used. Try again tomorrow.`);
     const id = randomUUID();
-    await tx.insert(usageRecords).values({ id, tenantId: tenant.id, auditId: input.auditId, kind: input.kind, units, createdAt: now });
+    const costMicros = input.kind === "ai" ? AI_RESERVATION_MICROS : null;
+    await tx.insert(usageRecords).values({ id, tenantId: tenant.id, auditId: input.auditId, kind: input.kind, units, costMicros, createdAt: now });
     return id;
   });
+}
+
+/** Replaces an AI reservation's estimate with what the provider actually charged. */
+export async function settleAiCost(db: SaasDb, tenantId: string, reservationId: string, costMicros: number) {
+  await db.update(usageRecords).set({ costMicros }).where(and(eq(usageRecords.tenantId, tenantId), eq(usageRecords.id, reservationId)));
 }
 
 /** Returns one reservation (by its ledger ID) to both the account and the global budget. */

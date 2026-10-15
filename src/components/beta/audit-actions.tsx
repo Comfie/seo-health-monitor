@@ -75,12 +75,13 @@ export function RerunPagespeedButton({ auditId, active }: { auditId: number; act
   );
 }
 
-export function AiReportButton({ auditId, hasReport }: { auditId: number; hasReport: boolean }) {
+/** Generates the audit's one AI report; render it only while the audit has none. */
+export function AiReportButton({ auditId }: { auditId: number }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const run = async () => {
     setPending(true);
-    const r = await postJson(`/api/beta/audits/${auditId}/ai${hasReport ? "?regenerate=1" : ""}`, {});
+    const r = await postJson(`/api/beta/audits/${auditId}/ai`, {});
     setPending(false);
     if (!r.ok) return toast.error(errorText(r, "The AI consultant report could not be generated."));
     router.refresh();
@@ -88,7 +89,7 @@ export function AiReportButton({ auditId, hasReport }: { auditId: number; hasRep
   return (
     <Button variant="outline" onClick={run} disabled={pending}>
       {pending ? <Loader2 className="animate-spin" /> : <Sparkles />}
-      {pending ? "Writing report (up to a few minutes)…" : hasReport ? "Regenerate AI report" : "Generate AI consultant report"}
+      {pending ? "Writing report (up to a few minutes)…" : "Generate AI consultant report"}
     </Button>
   );
 }

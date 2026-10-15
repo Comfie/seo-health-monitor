@@ -36,7 +36,7 @@ export async function exportAccount(db: SaasDb, context: TenantContext) {
     const searchSnapshots = await tx.select().from(s.searchSnapshots).where(eq(s.searchSnapshots.tenantId, context.tenantId));
     const connections = await tx.select({ siteId: s.searchConsoleConnections.siteId, property: s.searchConsoleConnections.property, status: s.searchConsoleConnections.status, connectedAt: s.searchConsoleConnections.connectedAt }).from(s.searchConsoleConnections).where(eq(s.searchConsoleConnections.tenantId, context.tenantId));
     const events = await tx.select({ action: activity.action, metadata: activity.metadata, createdAt: activity.createdAt }).from(activity).where(eq(activity.tenantId, context.tenantId));
-    const usage = await tx.select({ auditId: usageRecords.auditId, kind: usageRecords.kind, units: usageRecords.units, createdAt: usageRecords.createdAt }).from(usageRecords).where(eq(usageRecords.tenantId, context.tenantId));
+    const usage = await tx.select({ auditId: usageRecords.auditId, kind: usageRecords.kind, units: usageRecords.units, costMicros: usageRecords.costMicros, createdAt: usageRecords.createdAt }).from(usageRecords).where(eq(usageRecords.tenantId, context.tenantId));
     const bare = <T extends { tenantId: string }>({ tenantId: _tenant, ...row }: T) => row;
     return { format: 'seo-health-monitor-account', version: 1, exportedAt: new Date().toISOString(), profile: owner,
       websites: websites.map(bare), audits: audits.map(bare), pages: pages.map(bare), checks: checks.map(bare), findings: findings.map(bare), performance: performance.map(bare), searchSnapshots: searchSnapshots.map(bare), connections, activity: events, usage };
@@ -46,11 +46,11 @@ export async function exportAccount(db: SaasDb, context: TenantContext) {
 /** Keep only anonymous day/kind totals so erasure cannot rewind shared provider cost caps. */
 async function archiveGlobalUsage(db: SaasDb, tenantId: string) {
   const day = sql<string>`to_char(${usageRecords.createdAt} at time zone 'UTC', 'YYYY-MM-DD')`;
-  const totals = await db.select({ kind: usageRecords.kind, day, units: sum(usageRecords.units) }).from(usageRecords)
+  const totals = await db.select({ kind: usageRecords.kind, day, units: sum(usageRecords.units), costMicros: sum(usageRecords.costMicros) }).from(usageRecords)
     .where(eq(usageRecords.tenantId, tenantId)).groupBy(usageRecords.kind, day);
   for (const total of totals) await db.insert(activity).values({
     id: randomUUID(), action: 'usage.anonymised',
-    metadata: { kind: total.kind, units: Number(total.units) }, createdAt: new Date(`${total.day}T00:00:00.000Z`),
+    metadata: { kind: total.kind, units: Number(total.units), ...(total.costMicros === null ? {} : { costMicros: Number(total.costMicros) }) }, createdAt: new Date(`${total.day}T00:00:00.000Z`),
   });
 }
 

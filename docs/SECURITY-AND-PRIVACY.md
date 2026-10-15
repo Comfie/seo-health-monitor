@@ -40,7 +40,7 @@ The security model as built, and the privacy position for the beta. This is a co
 - Railway hosts the app and database in EU West (Netherlands).
 - Google receives tested URLs for PageSpeed and handles Search Console requests.
 - Resend delivers account email.
-- Anthropic would receive audit data only if the optional AI consultant is enabled (it is off).
+- Anthropic receives an audit's results (page URLs, titles, findings, public contact details found on the site, and Search Console figures if connected) only when a user requests an AI consultant report.
 
 Each provider may process data outside South Africa.
 

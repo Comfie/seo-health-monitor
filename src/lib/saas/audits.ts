@@ -7,7 +7,7 @@ import { compareAudits, type CompareInput } from "@/lib/audit/compare";
 import type { Category } from "@/lib/audit/types";
 import type { SaasDb } from "./db";
 import { requestCancel } from "./jobs";
-import { BudgetExhaustedError, LOCK_GLOBAL_QUEUE, advisoryLock, effectiveLimits, monthStart, readLimitSettings, releaseUsage, reserveUsage, usageSummary, usedUnits, type LimitSettings } from "./limits";
+import { BudgetExhaustedError, LOCK_GLOBAL_QUEUE, advisoryLock, effectiveLimits, monthStart, readLimitSettings, releaseUsage, reserveUsage, settleAiCost, usageSummary, usedUnits, type LimitSettings } from "./limits";
 import { activity, jobs } from "./operations-schema";
 import { OperationalLimitError, tenantRepository } from "./repository";
 import * as schema from "./schema";
@@ -169,14 +169,11 @@ export function customerAudits(db: SaasDb, context: TenantContext, settings: Lim
       });
     },
 
-    /** Stored AI consultant report, or a new one within the AI budget. */
-    async consultantReport(id: number, generate: (f: FullAudit) => Promise<{ report: string; model: string }>, options: { regenerate?: boolean; now?: Date } = {}) {
+    /** Stored AI consultant report, or a new one within the AI budget. Each audit gets one report. */
+    async consultantReport(id: number, generate: (f: FullAudit) => Promise<{ report: string; model: string; costMicros?: number }>, options: { now?: Date } = {}) {
       const f = await full(id);
-      if (f.audit.aiReport && !options.regenerate) return { report: f.audit.aiReport, model: f.audit.aiModel, cached: true };
+      if (f.audit.aiReport) return { report: f.audit.aiReport, model: f.audit.aiModel, cached: true };
       const now = options.now ?? new Date();
-      if (f.audit.aiGeneratedAt && now.getTime() - f.audit.aiGeneratedAt.getTime() < 2 * 60_000) {
-        throw new OperationalLimitError("This report was generated moments ago. Wait two minutes before regenerating.");
-      }
       let reservation: string;
       try {
         reservation = await reserveUsage(db, { tenantId, auditId: id, kind: "ai", settings, now });
@@ -194,7 +191,8 @@ export function customerAudits(db: SaasDb, context: TenantContext, settings: Lim
         await releaseUsage(db, tenantId, reservation);
         throw error;
       }
-      const { report, model } = generated;
+      const { report, model, costMicros } = generated;
+      if (costMicros !== undefined) await settleAiCost(db, tenantId, reservation, costMicros);
       await db.update(schema.audits).set({ aiReport: report, aiModel: model, aiGeneratedAt: now }).where(own(id));
       return { report, model, cached: false };
     },

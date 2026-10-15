@@ -182,9 +182,9 @@ async function AuditContent({ params }: PageProps<"/beta/audits/[id]">) {
         )}
       </Section>
 
-      <Section title="AI consultant report" description="Optional narrative report written by an AI model from this audit's measured data only. Uses your monthly AI allowance.">
+      <Section title="AI consultant report" description="Optional narrative report written by an AI model from this audit's measured data only. Each audit can have one report, which uses one of your monthly AI reports.">
         {audit.aiReport ? <div className="rounded-lg border bg-card p-5"><Markdown>{audit.aiReport}</Markdown></div> : null}
-        {isAiConfigured() ? <div className="mt-3"><AiReportButton auditId={audit.id} hasReport={!!audit.aiReport} /></div> : <p className="text-sm text-muted-foreground">The AI consultant is not enabled for the beta yet. Fix with AI instructions above work with any AI coding tool.</p>}
+        {audit.aiReport ? null : isAiConfigured() ? <div className="mt-3"><AiReportButton auditId={audit.id} /></div> : <p className="text-sm text-muted-foreground">The AI consultant is not enabled for the beta yet. Fix with AI instructions above work with any AI coding tool.</p>}
       </Section>
 
       {(unverified.length > 0 || (meta?.notes.length ?? 0) > 0) && (
