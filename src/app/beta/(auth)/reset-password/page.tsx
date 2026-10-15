@@ -3,7 +3,7 @@ import { AuthCard } from "@/components/beta/auth-card";
 import { ResetPasswordForm } from "@/components/beta/forms";
 import { requireBetaRuntime } from "@/lib/saas/page";
 
-export const metadata = { title: "Choose a new password" };
+export const metadata = { title: "Create a new password" };
 
 async function Gate() {
   await requireBetaRuntime();
@@ -12,7 +12,7 @@ async function Gate() {
 
 export default function ResetPasswordPage() {
   return (
-    <AuthCard title="Choose a new password">
+    <AuthCard title="Create a new password" description="Choose a strong password you don't use anywhere else.">
       <Suspense>
         <Gate />
       </Suspense>

@@ -25,7 +25,7 @@ async function Invitation({ searchParams }: PageProps<"/beta/register">) {
 
 export default function RegisterPage(props: PageProps<"/beta/register">) {
   return (
-    <AuthCard title="Create your account">
+    <AuthCard title="Accept your invitation to get started" description="Create your account with the email address your invitation was sent to.">
       <Suspense>
         <Invitation {...props} />
       </Suspense>

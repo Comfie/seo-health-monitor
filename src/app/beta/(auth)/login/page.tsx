@@ -12,7 +12,7 @@ async function Gate() {
 
 export default function BetaLoginPage() {
   return (
-    <AuthCard title="Sign in">
+    <AuthCard title="Welcome back" description="Sign in to review your audits and what to fix next.">
       <Suspense>
         <Gate />
       </Suspense>

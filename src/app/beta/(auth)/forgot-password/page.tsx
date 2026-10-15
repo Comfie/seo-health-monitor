@@ -12,7 +12,7 @@ async function Gate() {
 
 export default function ForgotPasswordPage() {
   return (
-    <AuthCard title="Reset your password">
+    <AuthCard title="Reset your password" description="Enter your account email and we'll send you a link to choose a new password.">
       <Suspense>
         <Gate />
       </Suspense>
