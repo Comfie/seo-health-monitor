@@ -44,7 +44,7 @@ export function MetricCard({ label, value, note, icon: Icon, tone = "primary" }:
 export function UsageMeter({ label, used, limit }: { label: string; used: number; limit: number }) {
   const percent = limit > 0 ? Math.min(100, used / limit * 100) : used > 0 ? 100 : 0;
   return <div>
-    <div className="mb-2 flex items-center justify-between gap-3 text-sm"><span className="text-muted-foreground">{label}</span><span className="font-medium tabular-nums">{used.toLocaleString()} <span className="font-normal text-muted-foreground">/ {limit.toLocaleString()}</span></span></div>
+    <div className="mb-2 flex items-center justify-between gap-3 text-sm"><span className="text-muted-foreground">{label}</span><span className="font-medium tabular-nums">{used.toLocaleString('en-GB')} <span className="font-normal text-muted-foreground">/ {limit.toLocaleString('en-GB')}</span></span></div>
     <div role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={Math.max(limit, used, 1)} aria-valuenow={used} aria-valuetext={`${used} of ${limit}`} className="h-1.5 overflow-hidden rounded-full bg-muted">
       <div className={cn("h-full rounded-full", percent >= 100 ? "bg-destructive" : percent >= 80 ? "bg-sev-medium" : "bg-primary")} style={{ width: `${percent}%` }} />
     </div>

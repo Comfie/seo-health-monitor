@@ -96,7 +96,9 @@ function RevokeButton({ id, email }: { id: string; email: string }) {
 
 export function InvitationTable({ invitations }: { invitations: InvitationRow[] }) {
   if (invitations.length === 0) return <p className="rounded-lg border border-dashed bg-card px-4 py-8 text-center text-sm text-muted-foreground">No invitations yet.</p>;
-  const fmt = (iso: string) => new Date(iso).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  // This component renders on both server and browser; a fixed zone prevents hydration
+  // mismatches when Railway (UTC) and the operator's computer have different time zones.
+  const fmt = (iso: string) => new Date(iso).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "UTC" }) + " UTC";
   return (
     <ul className="divide-y rounded-lg border bg-card text-sm">
       {invitations.map((inv) => (

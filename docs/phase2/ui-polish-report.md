@@ -24,5 +24,6 @@ New presentational components `workspace-ui.tsx` and `admin-activity.tsx` give t
 - Baseline live screenshots captured before editing; both administration entries were confirmed active on Operations.
 - The local synthetic preview encountered a Next.js development-bundler failure with linked dependencies. It was stopped; the separate existing development server was preserved. Visual validation uses the deployed beta production build and read-only administrator session instead.
 - Hosted visual results are recorded in `evidence/ui-polish/` after deployment. No account edits or invitations are required for visual verification.
+- Live browser checks found an existing invitation timestamp hydration mismatch: UTC on Railway versus local time in the browser. Invitation timestamps now use an explicit UTC zone and label; usage number formatting also uses an explicit locale. The final hosted run must have no unhandled browser errors.
 
 The owner's statement that manual checklist items 1–5 worked is recorded as **owner-reported verification**; this is distinct from automated evidence. Production cutover approval remains pending. UI work does not approve that cutover or any production database/role changes.
