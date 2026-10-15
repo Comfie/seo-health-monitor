@@ -1,5 +1,7 @@
 # Current direction: one unified application
 
+> **Historical.** This ledger is kept as history only. For the current state, see [`docs/STATUS.md`](../../STATUS.md).
+
 The owner's 15 October instruction supersedes the earlier separate-beta-product and separate-Google-client requirements. See [the unified migration review](unified-migration-plan.md) for actual production backup/rehearsal evidence, explicit existing-client/key reuse, preserved callback, tenant routing, and the production cutover approval gate. Earlier stage reports below remain historical evidence.
 
 # Phase 2 implementation ledger

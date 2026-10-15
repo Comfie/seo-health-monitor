@@ -1,5 +1,7 @@
 # Unified application release review — 15 October 2026
 
+> **Superseded (15 October 2026).** This plan was executed with owner-approved changes: no SQLite import, a single database and a fresh start. See the cutover record in [`docs/STATUS.md`](../../STATUS.md).
+
 **Latest review update:** the owner reports completing manual checklist items 1–5 successfully, including their Google and account-management checks. This is owner-reported verification; automated live OAuth consent is not claimed. The follow-up [UI polish release](ui-polish-report.md) is deployed to beta at **`6d2a9a043032b1bcbdbc2adeac56682449fe834a`**, including all prior G6/unification work. Its 268 automated tests and 21 final live visual/browser checks passed. This is the current application revision for a future cutover review; the older candidate evidence below remains the historical migration checkpoint. Production cutover and database/role changes remain unapproved.
 
 The owner's latest instructions supersede the separate-product and dedicated-Google-client strategy. Source remains `phase2-multiuser`, preserving completed G5/G6 work and evidence. The final target is **https://seo-health-monitor-production.up.railway.app/**. Final production cutover, production logical-database creation/role changes, and production variable changes are **not executed without explicit approval of this packet**. Existing beta is the rehearsal service, not a second permanent product. No invitations, payments, public registration, or scheduled destructive retention.
