@@ -97,3 +97,44 @@ describe("non-destructive SQLite to PostgreSQL rehearsal", () => {
     } finally { await f.client.close(); }
   }, 30_000);
 });
+
+describe("G5 migration 0003 on a populated G4 database", () => {
+  it("is additive: existing tenants, sites, audits, jobs and Google rows survive unchanged", async () => {
+    // Apply 0000-0002 only (the current staging state), add G4-style rows, then apply 0003.
+    const g4 = path.join(directory, `g4-${randomUUID()}`);
+    fs.mkdirSync(path.join(g4, "meta"), { recursive: true });
+    const journal = JSON.parse(fs.readFileSync("drizzle-saas/meta/_journal.json", "utf8"));
+    const before = { ...journal, entries: journal.entries.filter((e: { tag: string }) => e.tag < "0003") };
+    for (const e of before.entries) fs.copyFileSync(`drizzle-saas/${e.tag}.sql`, path.join(g4, `${e.tag}.sql`));
+    fs.writeFileSync(path.join(g4, "meta/_journal.json"), JSON.stringify(before));
+    const client = new PGlite();
+    const db = drizzle(client, { schema: saasSchema });
+    await migrate(db, { migrationsFolder: g4 });
+    await client.exec(`
+      insert into auth_user (id, name, email, email_verified, created_at, updated_at) values ('u1', 'A', 'a@example.com', true, now(), now());
+      insert into tenants (id, name, personal_user_id) values ('t1', 'A', 'u1');
+      insert into memberships (tenant_id, user_id, role) values ('t1', 'u1', 'owner');
+      insert into sites (id, tenant_id, host, display_url) values (5, 't1', 'example.com', 'https://example.com/');
+      insert into audits (id, tenant_id, site_id, input_url, start_url, status, overall_score) values (9, 't1', 5, 'https://example.com/', 'https://example.com/', 'completed', 81);
+      insert into background_jobs (id, tenant_id, audit_id, state, attempts, fence) values ('j1', 't1', 9, 'completed', 1, 1);
+      insert into usage_records (id, tenant_id, audit_id, kind) values ('r1', 't1', 9, 'audit');
+      insert into google_accounts (tenant_id, user_id, email, encrypted_refresh_token, scopes, connected_at) values ('t1', 'u1', 'g@example.com', 'ciphertext', 'read-only', now());
+    `);
+    const snapshot = async () => {
+      const out: Record<string, unknown> = {};
+      for (const t of ["tenants", "memberships", "sites", "audits", "background_jobs", "usage_records"]) out[t] = (await client.query(`select * from ${t} order by 1`)).rows;
+      out.google = (await client.query("select id, tenant_id, user_id, email, encrypted_refresh_token, scopes from google_accounts")).rows;
+      return out;
+    };
+    const rowsBefore = await snapshot();
+    await migrate(db, { migrationsFolder: "drizzle-saas" });
+    expect(await snapshot()).toEqual(rowsBefore);
+    const [google] = (await client.query<{ status: string; google_subject: string | null }>("select status, google_subject from google_accounts")).rows;
+    expect(google).toEqual({ status: "active", google_subject: null });
+    const tables = (await client.query<{ n: number }>("select count(*)::int as n from information_schema.tables where table_schema = 'public'")).rows[0].n;
+    expect(tables).toBe(24);
+    // The migration file contains no destructive statements.
+    expect(fs.readFileSync("drizzle-saas/0003_g5_search_console.sql", "utf8")).not.toMatch(/\b(drop|truncate|rename|alter column)\b|(^|;|breakpoint>)\s*(delete|update)\b/im);
+    await client.close();
+  });
+});

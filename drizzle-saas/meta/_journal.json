@@ -22,6 +22,13 @@
       "when": 1792005807559,
       "tag": "0002_stage3_audit_jobs",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792043942319,
+      "tag": "0003_g5_search_console",
+      "breakpoints": true
     }
   ]
 }

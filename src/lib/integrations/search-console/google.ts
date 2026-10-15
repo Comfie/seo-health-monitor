@@ -23,6 +23,10 @@ export class GoogleApiError extends Error {
   get needsReconnect(): boolean {
     return this.reason === "invalid_grant" || this.status === 401;
   }
+  /** Google's quota or rate limit was hit; retry later rather than immediately. */
+  get quotaExceeded(): boolean {
+    return this.status === 429 || this.reason === "RESOURCE_EXHAUSTED";
+  }
 }
 
 export interface OAuthClient {
@@ -31,7 +35,7 @@ export interface OAuthClient {
   redirectUri: string;
 }
 
-export function buildAuthUrl(client: OAuthClient, state: string, codeChallenge: string): string {
+export function buildAuthUrl(client: OAuthClient, state: string, codeChallenge: string, options: { includeGrantedScopes?: boolean } = {}): string {
   const params = new URLSearchParams({
     client_id: client.clientId,
     redirect_uri: client.redirectUri,
@@ -39,11 +43,13 @@ export function buildAuthUrl(client: OAuthClient, state: string, codeChallenge: 
     scope: SEARCH_CONSOLE_SCOPES.join(" "),
     access_type: "offline",
     prompt: "consent",
-    include_granted_scopes: "true",
     state,
     code_challenge: codeChallenge,
     code_challenge_method: "S256",
   });
+  // Incremental authorisation can merge scopes granted earlier to the same client; the beta
+  // asks for exactly the read-only set so a stored grant never carries wider access.
+  if (options.includeGrantedScopes ?? true) params.set("include_granted_scopes", "true");
   return `${AUTH_URL}?${params}`;
 }
 
@@ -95,8 +101,13 @@ export async function refreshAccessToken(client: Omit<OAuthClient, "redirectUri"
   return (await res.json()) as TokenResponse;
 }
 
-export async function revokeToken(token: string): Promise<void> {
-  await fetch(REVOKE_URL, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ token }), signal: AbortSignal.timeout(10_000) }).catch(() => undefined);
+/** Revokes a grant at Google. Resolves true when Google confirmed it (or already considered it invalid). */
+export async function revokeToken(token: string): Promise<boolean> {
+  const res = await fetch(REVOKE_URL, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ token }), signal: AbortSignal.timeout(10_000) }).catch(() => null);
+  if (!res) return false;
+  if (res.ok) return true;
+  // 400 invalid_token: the grant is already gone, which is the outcome we wanted.
+  return res.status === 400 && ((await res.json().catch(() => ({}))) as { error?: string }).error === "invalid_token";
 }
 
 /**
@@ -108,6 +119,18 @@ export function emailFromIdToken(idToken: string | undefined): string | null {
   try {
     const payload = JSON.parse(Buffer.from(idToken.split(".")[1], "base64url").toString("utf8")) as { email?: string };
     return payload.email ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Google's stable account ID (`sub`) and email from the same directly received ID token. */
+export function identityFromIdToken(idToken: string | undefined): { subject: string; email: string | null } | null {
+  if (!idToken) return null;
+  try {
+    const payload = JSON.parse(Buffer.from(idToken.split(".")[1], "base64url").toString("utf8")) as { sub?: unknown; email?: unknown };
+    if (typeof payload.sub !== "string" || !/^[\w-]{1,255}$/.test(payload.sub)) return null;
+    return { subject: payload.sub, email: typeof payload.email === "string" ? payload.email.slice(0, 320) : null };
   } catch {
     return null;
   }
@@ -184,6 +207,26 @@ export function propertyCovers(property: string, url: string): boolean {
       return u.hostname === domain || u.hostname.endsWith(`.${domain}`);
     }
     return url.startsWith(property);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Whether a property is appropriate for a website: a domain property for the site's domain
+ * (or a parent domain), or a URL-prefix property on the site's own host, with or without
+ * www and on either scheme. A prefix property may cover only part of the site; inspections
+ * are still limited to the URLs it covers.
+ */
+export function propertyMatchesSite(property: string, siteHost: string): boolean {
+  const bare = siteHost.toLowerCase().replace(/^www\./, "");
+  if (property.startsWith("sc-domain:")) {
+    const domain = property.slice("sc-domain:".length).toLowerCase();
+    return !!domain && (bare === domain || bare.endsWith(`.${domain}`));
+  }
+  try {
+    const u = new URL(property);
+    return (u.protocol === "https:" || u.protocol === "http:") && u.hostname.toLowerCase().replace(/^www\./, "") === bare;
   } catch {
     return false;
   }

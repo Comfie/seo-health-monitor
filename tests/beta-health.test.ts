@@ -17,7 +17,7 @@ const origin = "https://beta.example.com";
 function runtimeFor(db: SaasDb): BetaRuntime {
   const config: BetaConfig = {
     databaseUrl: "pglite://memory", origin, authSecret: randomUUID() + randomUUID(), registration: "invite-only",
-    invitationsEnabled: false, invitationTtlHours: 72, email: { transport: "log", allowlist: [] },
+    invitationsEnabled: false, invitationTtlHours: 72, email: { transport: "log", allowlist: [] }, google: { state: "unavailable", problem: "Not configured in this test.", redirectUri: "https://beta.example.com/api/beta/google/callback" },
   };
   return { config, db, mail: async () => {}, auth: createSaasAuth({ db, origin, secret: config.authSecret, registration: "invite-only", sendMail: async () => {} }) };
 }

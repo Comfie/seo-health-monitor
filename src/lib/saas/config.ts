@@ -4,6 +4,14 @@ export type EmailConfig =
   | { transport: "resend"; apiKey: string; from: string; allowlist: string[] }
   | { transport: "log"; allowlist: string[] };
 
+/**
+ * Customer Search Console. Optional: when it is not configured (or unsafe) only Search
+ * Console is unavailable; the rest of the beta keeps working.
+ */
+export type GoogleConfig =
+  | { state: "ready"; clientId: string; clientSecret: string; tokenSecret: string; redirectUri: string; maxInspections: number }
+  | { state: "unavailable"; problem: string; redirectUri: string };
+
 export type BetaConfig = {
   databaseUrl: string;
   origin: string;
@@ -13,6 +21,7 @@ export type BetaConfig = {
   invitationTtlHours: number;
   trustedIpHeader?: string;
   email: EmailConfig;
+  google: GoogleConfig;
 };
 
 export type BetaConfigState =
@@ -72,6 +81,7 @@ export function readBetaConfig(env: NodeJS.ProcessEnv = process.env): BetaConfig
     return fail("EMAIL_TRANSPORT must be resend (log is development only).");
   }
 
+  const google = readGoogleConfig(env, origin!, authSecret);
   const ttl = Number.parseInt(value(env, "PHASE2_INVITATION_TTL_HOURS") ?? "72", 10);
   return {
     state: "ready",
@@ -84,6 +94,27 @@ export function readBetaConfig(env: NodeJS.ProcessEnv = process.env): BetaConfig
       invitationTtlHours: Number.isFinite(ttl) ? Math.min(336, Math.max(1, ttl)) : 72,
       trustedIpHeader: value(env, "PHASE2_TRUSTED_IP_HEADER"),
       email,
+      google,
     },
   };
+}
+
+/**
+ * The beta uses its own Google OAuth client and its own token-encryption secret. Reusing
+ * the Phase 1 client would mean editing a production integration (redirect URIs) and would
+ * let a beta revocation end Phase 1's grant for the same Google user, so it is refused.
+ */
+export function readGoogleConfig(env: NodeJS.ProcessEnv, origin: string, authSecret: string): GoogleConfig {
+  const redirectUri = `${origin}/api/beta/google/callback`;
+  const clientId = value(env, "PHASE2_GOOGLE_CLIENT_ID");
+  const clientSecret = value(env, "PHASE2_GOOGLE_CLIENT_SECRET");
+  const tokenSecret = value(env, "PHASE2_GOOGLE_TOKEN_SECRET");
+  const unavailable = (problem: string) => ({ state: "unavailable", problem, redirectUri }) as const;
+  if (!clientId && !clientSecret && !tokenSecret) return unavailable("Search Console is not configured for the beta.");
+  if (!clientId || !clientSecret || !tokenSecret) return unavailable("PHASE2_GOOGLE_CLIENT_ID, PHASE2_GOOGLE_CLIENT_SECRET and PHASE2_GOOGLE_TOKEN_SECRET are all required.");
+  if (clientId === value(env, "GOOGLE_CLIENT_ID")) return unavailable("PHASE2_GOOGLE_CLIENT_ID must be a separate OAuth client from Phase 1's GOOGLE_CLIENT_ID.");
+  if (tokenSecret.length < 32) return unavailable("PHASE2_GOOGLE_TOKEN_SECRET must be 32+ random characters.");
+  if ([value(env, "APP_SECRET"), authSecret].includes(tokenSecret)) return unavailable("PHASE2_GOOGLE_TOKEN_SECRET must differ from APP_SECRET and PHASE2_AUTH_SECRET.");
+  const inspections = Number.parseInt(value(env, "PHASE2_GSC_MAX_INSPECTIONS") ?? "10", 10);
+  return { state: "ready", clientId, clientSecret, tokenSecret, redirectUri, maxInspections: Number.isFinite(inspections) ? Math.min(50, Math.max(0, inspections)) : 10 };
 }

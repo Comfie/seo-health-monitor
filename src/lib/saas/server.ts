@@ -72,6 +72,14 @@ export async function isAdministrator(db: SaasDb, userId: string) {
   return !!row;
 }
 
+/**
+ * Request time only: a GET handler must never be prerendered with a build-time answer, and the
+ * database is never opened during a build. (The test seam calls handlers outside Next.js.)
+ */
+export async function atRequestTime() {
+  if (globalRef.__shmBetaOverride === undefined) await connection();
+}
+
 const json = (status: number, body: unknown, headers?: HeadersInit) =>
   Response.json(body, { status, headers: { "cache-control": "no-store", ...headers } });
 export const notFound = () => json(404, { error: "Not found." });
@@ -83,9 +91,7 @@ export { json as betaJson };
  * mutations, then the tenant derived from the library session (never from the request).
  */
 export async function withCustomer(request: Request, handler: (ctx: { runtime: BetaRuntime; tenant: TenantContext }) => Promise<Response>, options: { admin?: boolean } = {}) {
-  // Request time only: a GET handler must never be prerendered with a build-time answer, and the
-  // database is never opened during a build. (The test seam calls handlers outside Next.js.)
-  if (globalRef.__shmBetaOverride === undefined) await connection();
+  await atRequestTime();
   const beta = await getBeta();
   if (beta.state === "disabled") return notFound();
   if (beta.state === "misconfigured") return json(503, { error: "The beta is not available." });

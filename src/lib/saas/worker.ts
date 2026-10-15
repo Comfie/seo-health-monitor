@@ -1,7 +1,9 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { executeJob, type RunnerDeps, type RunOutcome } from "./audit-runner";
+import { claimRefresh, recoverExpiredRefreshes, releaseRefresh, type RefreshLease } from "./gsc-jobs";
 import { claimJob, DEFAULT_TIMING, heartbeat, JobCancelledError, LeaseLostError, recoverExpiredJobs, releaseJob, type Lease, type QueueTiming } from "./jobs";
+import { runRefreshJob, type RefreshOutcome } from "./search-console";
 
 export type WorkerOptions = RunnerDeps & {
   workerId?: string;
@@ -12,6 +14,7 @@ export type WorkerOptions = RunnerDeps & {
   /** Hard limit per job; a job still running after this is aborted and retried (default 20 minutes). */
   deadlineMs?: number;
   onOutcome?: (lease: Lease, outcome: RunOutcome) => void;
+  onRefreshOutcome?: (lease: RefreshLease, outcome: RefreshOutcome) => void;
 };
 
 /**
@@ -23,6 +26,8 @@ export function createWorker(options: WorkerOptions) {
   const workerId = options.workerId ?? `worker-${randomUUID()}`;
   const concurrency = Math.max(1, options.concurrency ?? 1);
   const running = new Map<string, { lease: Lease; controller: AbortController; done: Promise<RunOutcome> }>();
+  // Search Console refreshes: short Google API calls, at most one per process, on their own queue.
+  const refreshing = new Map<string, { lease: RefreshLease; done: Promise<RefreshOutcome> }>();
   let timer: NodeJS.Timeout | undefined;
   let ticking = false;
   let stopping = false;
@@ -66,6 +71,24 @@ export function createWorker(options: WorkerOptions) {
     } finally {
       ticking = false;
     }
+    await refreshTick();
+  }
+
+  async function refreshTick() {
+    if (stopping || refreshing.size > 0 || options.google?.state !== "ready") return;
+    try {
+      await recoverExpiredRefreshes(options.db, timing, now());
+      const lease = await claimRefresh(options.db, workerId, timing, now());
+      if (!lease) return;
+      const done = runRefreshJob({ db: options.db, google: options.google, timing, now: options.now }, lease).finally(() => {
+        refreshing.delete(lease.jobId);
+        if (!stopping) void refreshTick();
+      });
+      done.then((outcome) => options.onRefreshOutcome?.(lease, outcome), () => {});
+      refreshing.set(lease.jobId, { lease, done });
+    } catch {
+      console.error(`[beta-worker] ${workerId} search console poll failed; retrying`);
+    }
   }
 
   return {
@@ -73,6 +96,8 @@ export function createWorker(options: WorkerOptions) {
     tick,
     /** In-flight job promises (tests await these). */
     active: () => [...running.values()].map((r) => r.done),
+    /** In-flight Search Console refreshes (tests await these). */
+    refreshes: () => [...refreshing.values()].map((r) => r.done),
     start() {
       if (timer || stopping) return;
       timer = setInterval(() => void tick(), options.pollMs ?? 2_000);
@@ -90,6 +115,11 @@ export function createWorker(options: WorkerOptions) {
       for (const r of current) r.controller.abort(new LeaseLostError());
       await Promise.allSettled(current.map((r) => r.done));
       await Promise.allSettled(current.map((r) => releaseJob(options.db, r.lease, now())));
+      // A refresh is a few API calls: let it finish (bounded by Google's request timeouts); if
+      // the process dies first, lease expiry hands it to another worker.
+      const pending = [...refreshing.values()];
+      await Promise.allSettled(pending.map((r) => r.done));
+      await Promise.allSettled(pending.map((r) => releaseRefresh(options.db, r.lease, now())));
     },
   };
 }

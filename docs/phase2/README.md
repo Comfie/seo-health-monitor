@@ -2,6 +2,16 @@
 
 Updated 15 October 2026 (Africa/Johannesburg). Stages 1 (foundation), 2 (customer onboarding and website management) and 3 (multi-tenant audit engine) are implemented on `phase2-multiuser`. The approved controlled G4 A/B run passed **229 hosted checks and 25 browser checks**, with **211 local tests**, type checking and lint passing. Source and evidence are committed on this branch; nothing was pushed or merged into production. This is **not a completed SaaS or an external beta approval**. No monetisation is included. Phase 1's service and data remain unchanged; no external tester was invited; unrestricted public registration does not exist.
 
+## G5: multi-tenant Google Search Console (local stage complete, hosted pending approval)
+
+Prepared 15 October 2026 on `phase2-multiuser`, on top of the tested G4 release `d31e130`. Uncommitted; nothing was pushed or deployed. Staging and Phase 1 were not changed; staging was only listed read-only (variable names).
+
+- **Implemented:** per-tenant Google OAuth (POST start, server-side hashed single-use state bound to tenant, user, session and a browser nonce, PKCE S256, read-only scopes, no incremental scope merging), tenant-bound encrypted refresh tokens under a beta-only secret, revocation detection, safe disconnect (no revocation of a grant another tenant shares), property listing and linking with domain and URL-prefix suitability checks, a separate fenced refresh-job queue, real search-performance views, owner-authorised index status in audits (Google's reasons, important pages, recommendations, Fix with AI, JSON/PDF reports, AI consultant), and "Not verified" labelling when Search Console isn't connected.
+- **Migration** `drizzle-saas/0003_g5_search_console.sql`: additive (2 tables, nullable/defaulted columns, indexes). Tested on a populated 0000–0002 database: every existing row unchanged.
+- **Local evidence:** 239 tests (27 new isolation tests + 1 migration test), typecheck, lint, build, worker bundle, Phase 1 smoke, and a 28/28 browser walkthrough. **Google responses were mocked**; nothing here is real-Google evidence.
+- **PageSpeed gap:** root cause confirmed. Neither beta service has `PAGESPEED_API_KEY`; keyless requests hit Google's shared daily quota (429 today). A beta-only key is needed.
+- **Next:** gates SC1–SC5 (Google OAuth client, migration, deploy, real-account hosted tests including a multi-worker run, PageSpeed key). Full report: [g5-search-console-report.md](g5-search-console-report.md).
+
 ## Stage 4A: Railway staging preparation (in progress)
 
 **Current internal test run (15 October 2026):** G4 is now approved for the two synthetic plus-address accounts only. Source baseline `0d181a3` and beta fixes `d31e130` are committed on `phase2-multiuser`, with no push or production merge. G4 is enabled only on the beta service; the original operator-only status below is historical. Current evidence and limitations: [controlled internal test report](hosted-g4-test-report.md).
@@ -98,7 +108,7 @@ Application artifact provenance remains the original uncommitted tree on `b3a867
 
 ### Stage 4B (after 4A closes)
 
-Tenant-specific Google Search Console (OAuth state per tenant, grants, token cache, property checks, disconnect, two-account test); administration (quota overrides, suspension, queue and failed-job views, privileged action log); privacy (account export and deletion, retention jobs, reviewed privacy policy, terms and crawling notice, POPIA evaluation).
+Tenant-specific Google Search Console: implemented in G5 (above), hosted verification pending. Administration (quota overrides, suspension, queue and failed-job views, privileged action log); privacy (account export and deletion, retention jobs, reviewed privacy policy, terms and crawling notice, POPIA evaluation).
 
 ---
 

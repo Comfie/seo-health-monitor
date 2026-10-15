@@ -32,7 +32,7 @@ const config: BetaConfig = {
   registration: "invite-only",
   invitationsEnabled: true,
   invitationTtlHours: 72,
-  email: { transport: "log", allowlist: [] },
+  email: { transport: "log", allowlist: [] }, google: { state: "unavailable", problem: "Not configured in this test.", redirectUri: "https://beta.example.com/api/beta/google/callback" },
 };
 const send = async (m: Mail) => { outbox.push(m); };
 const runtime: BetaRuntime = {

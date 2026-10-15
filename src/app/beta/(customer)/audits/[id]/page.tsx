@@ -18,11 +18,12 @@ import { CATEGORY_WEIGHTS, assessScore, scoreLabel } from "@/lib/audit/scoring";
 import { CATEGORIES, CATEGORY_LABELS, type Category } from "@/lib/audit/types";
 import { buildActionPlan } from "@/lib/reports/action-plan";
 import { getCustomerAudit } from "@/lib/saas/audit-page";
+import { auditSearchSummary } from "@/lib/saas/search-console";
 
 export const metadata = { title: "Audit" };
 
 async function AuditContent({ params }: PageProps<"/beta/audits/[id]">) {
-  const { audits, status } = await getCustomerAudit((await params).id);
+  const { audits, status, runtime, tenant } = await getCustomerAudit((await params).id);
   const base = `/beta/audits/${status.id}`;
 
   if (status.status === "queued" || status.status === "running") {
@@ -59,7 +60,11 @@ async function AuditContent({ params }: PageProps<"/beta/audits/[id]">) {
     );
   }
 
-  const [full, history] = await Promise.all([audits.full(status.id), audits.history({ websiteId: status.websiteId, limit: 50 })]);
+  const [full, history, google] = await Promise.all([
+    audits.full(status.id),
+    audits.history({ websiteId: status.websiteId, limit: 50 }),
+    auditSearchSummary(runtime.db, runtime.config.google, tenant, status.websiteId),
+  ]);
   const { audit, meta, issues, checks, performance } = full;
   const previous = history.find((h) => h.status === "completed" && h.id !== audit.id && (h.completedAt ?? "") < (audit.completedAt?.toISOString() ?? ""));
   const counts = audit.counts ?? {};
@@ -143,6 +148,38 @@ async function AuditContent({ params }: PageProps<"/beta/audits/[id]">) {
         actions={<Link href={`${base}/findings?category=performance`} className={buttonVariants({ variant: "link", className: "px-0" })}>Performance findings <ArrowUpRight /></Link>}
       >
         <RerunPagespeedButton auditId={audit.id} active={status.pagespeedRerun !== null} />
+      </Section>
+
+      <Section
+        title="Google search performance"
+        description="Owner-authorised data from your Google Search Console. It is not part of the on-site health score above."
+        actions={<Link href={`/beta/search-console?site=${status.websiteId}`} className={buttonVariants({ variant: "link", className: "px-0" })}>Search performance <ArrowUpRight /></Link>}
+      >
+        {google.verified ? (
+          <>
+            <dl className="grid grid-cols-2 divide-x divide-y rounded-xl border bg-card lg:grid-cols-4 lg:divide-y-0">
+              {[
+                ["Clicks", Math.round(google.clicks).toLocaleString("en-GB"), google.previous ? Math.round(google.previous.clicks).toLocaleString("en-GB") : null],
+                ["Impressions", Math.round(google.impressions).toLocaleString("en-GB"), google.previous ? Math.round(google.previous.impressions).toLocaleString("en-GB") : null],
+                ["Average CTR", google.impressions ? `${(google.ctr * 100).toFixed(1)}%` : "—", google.previous?.impressions ? `${(google.previous.ctr * 100).toFixed(1)}%` : null],
+                ["Average position", google.position === null ? "—" : google.position.toFixed(1), google.previous?.impressions ? google.previous.position.toFixed(1) : null],
+              ].map(([label, value, prev]) => (
+                <div key={label} className="px-4 py-4">
+                  <dt className="text-sm text-muted-foreground">{label}</dt>
+                  <dd className="mt-1 font-heading text-2xl font-semibold tabular-nums">{value}</dd>
+                  {prev !== null && <dd className="text-xs text-muted-foreground">Previous period: {prev}</dd>}
+                </div>
+              ))}
+            </dl>
+            <p className="mt-3 text-sm text-muted-foreground">
+              {google.property} · {google.period.start} to {google.period.end} · fetched {formatDate(google.fetchedAt)}.{" "}
+              {google.indexing.inspected ? `${google.indexing.inspected - google.indexing.notIndexed.length} of ${google.indexing.inspected} inspected pages are indexed by Google.` : "No pages inspected yet."}
+              {google.indexing.notIndexed.length > 0 && <> See <Link href={`${base}/findings?category=technical`} className="text-primary hover:underline">indexing findings</Link>.</>}
+            </p>
+          </>
+        ) : (
+          <p className="rounded-lg border bg-card px-4 py-4 text-sm text-muted-foreground">Not verified. {google.note} <Link href={`/beta/search-console?site=${status.websiteId}`} className="text-primary hover:underline">Connect Search Console</Link></p>
+        )}
       </Section>
 
       <Section title="AI consultant report" description="Optional narrative report written by an AI model from this audit's measured data only. Uses your monthly AI allowance.">

@@ -17,7 +17,7 @@ export async function startBetaWorker() {
     return;
   }
   const concurrency = Number.parseInt(process.env.PHASE2_WORKER_CONCURRENCY ?? "1", 10);
-  const worker = createWorker({ db: beta.runtime.db, settings: beta.runtime.limits ?? readLimitSettings(), concurrency: Number.isFinite(concurrency) ? Math.min(4, Math.max(1, concurrency)) : 1 });
+  const worker = createWorker({ db: beta.runtime.db, settings: beta.runtime.limits ?? readLimitSettings(), google: beta.runtime.config.google, concurrency: Number.isFinite(concurrency) ? Math.min(4, Math.max(1, concurrency)) : 1 });
   globalRef.__shmBetaWorker = worker;
   worker.start();
   const stop = () => void worker.stop();

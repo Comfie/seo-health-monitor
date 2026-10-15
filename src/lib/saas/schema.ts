@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { foreignKey, index, integer, doublePrecision, pgTable, text, timestamp, jsonb, unique, uniqueIndex } from "drizzle-orm/pg-core";
+import { check, foreignKey, index, integer, doublePrecision, pgTable, text, timestamp, jsonb, unique, uniqueIndex } from "drizzle-orm/pg-core";
 import { memberships, tenants } from "./tenancy-schema";
 export * from "./auth-schema";
 export * from "./tenancy-schema";
@@ -157,8 +157,10 @@ export const performanceResults = pgTable(
 );
 
 /**
- * The Google account authorised for Search Console (read-only scope).
- * The refresh token is AES-256-GCM encrypted with a key derived from APP_SECRET.
+ * The Google account a tenant authorised for Search Console (read-only scope); at most one
+ * per tenant. The refresh token is AES-256-GCM encrypted with a key derived from the beta's
+ * own token secret and bound to the tenant, so a ciphertext copied to another tenant's row
+ * cannot be decrypted. It is never selected into an API, page or report view.
  */
 export const googleAccounts = pgTable("google_accounts", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
@@ -169,7 +171,37 @@ export const googleAccounts = pgTable("google_accounts", {
   scopes: text("scopes").notNull(),
   connectedAt: timestamp("connected_at", { withTimezone: true }).notNull(),
   lastError: text("last_error"),
-}, (t) => [unique("google_tenant_id_idx").on(t.tenantId, t.id), foreignKey({ columns: [t.tenantId, t.userId], foreignColumns: [memberships.tenantId, memberships.userId] }).onDelete("cascade")]);
+  /** Google's stable account ID (`sub`); NULL only on rows imported from Phase 1. */
+  googleSubject: text("google_subject"),
+  status: text("status", { enum: ["active", "revoked"] }).notNull().default("active"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }),
+}, (t) => [
+  unique("google_tenant_id_idx").on(t.tenantId, t.id),
+  foreignKey({ columns: [t.tenantId, t.userId], foreignColumns: [memberships.tenantId, memberships.userId] }).onDelete("cascade"),
+  uniqueIndex("google_accounts_tenant_idx").on(t.tenantId),
+  index("google_accounts_subject_idx").on(t.googleSubject),
+  check("google_accounts_status_valid", sql`${t.status} in ('active', 'revoked')`),
+]);
+
+/**
+ * Pending OAuth authorisations. Only a SHA-256 hash of the state is stored; the row binds
+ * the state to the tenant, user, session and a browser nonce, and is consumed exactly once.
+ */
+export const googleOauthStates = pgTable("google_oauth_states", {
+  stateHash: text("state_hash").primaryKey(),
+  tenantId: text("tenant_id").notNull(),
+  userId: text("user_id").notNull(),
+  sessionId: text("session_id").notNull(),
+  browserHash: text("browser_hash").notNull(),
+  encryptedVerifier: text("encrypted_verifier").notNull(),
+  returnTo: text("return_to").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  consumedAt: timestamp("consumed_at", { withTimezone: true }),
+  createdAt: createdAt(),
+}, (t) => [
+  foreignKey({ columns: [t.tenantId, t.userId], foreignColumns: [memberships.tenantId, memberships.userId] }).onDelete("cascade"),
+  index("google_oauth_states_expiry_idx").on(t.expiresAt),
+]);
 
 /**
  * Links a site to a Search Console property. Search Console data is stored
@@ -186,6 +218,11 @@ export const searchConsoleConnections = pgTable("search_console_connections", {
   scopes: text("scopes").notNull(),
   connectedAt: timestamp("connected_at", { withTimezone: true }),
   createdAt: createdAt(),
+  /** Google's permission level for the property when it was linked (e.g. siteOwner, siteFullUser). */
+  permissionLevel: text("permission_level"),
+  lastRefreshedAt: timestamp("last_refreshed_at", { withTimezone: true }),
+  /** Customer-safe message only (never provider bodies or tokens). */
+  lastError: text("last_error"),
 }, (t) => [foreignKey({ columns: [t.tenantId, t.siteId], foreignColumns: [sites.tenantId, sites.id] }).onDelete("cascade"), foreignKey({ columns: [t.tenantId, t.googleAccountId], foreignColumns: [googleAccounts.tenantId, googleAccounts.id] }).onDelete("cascade"), uniqueIndex("connection_tenant_site_idx").on(t.tenantId, t.siteId)]);
 
 export interface SearchRowData {
@@ -234,5 +271,40 @@ export const searchSnapshots = pgTable(
     inspections: jsonb("inspections").$type<InspectionData[]>(),
     fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull(),
   },
-  (t) => [foreignKey({ columns: [t.tenantId, t.siteId], foreignColumns: [sites.tenantId, sites.id] }).onDelete("cascade"), foreignKey({ columns: [t.tenantId, t.auditId], foreignColumns: [audits.tenantId, audits.id] }).onDelete("cascade"), index("snapshots_site_idx").on(t.tenantId, t.siteId, t.fetchedAt)],
+  (t) => [
+    foreignKey({ columns: [t.tenantId, t.siteId], foreignColumns: [sites.tenantId, sites.id] }).onDelete("cascade"),
+    foreignKey({ columns: [t.tenantId, t.auditId], foreignColumns: [audits.tenantId, audits.id] }).onDelete("cascade"),
+    index("snapshots_site_idx").on(t.tenantId, t.siteId, t.fetchedAt),
+    index("snapshots_audit_idx").on(t.tenantId, t.auditId),
+  ],
 );
+
+/**
+ * Search Console refresh queue, separate from the audit queue so audit claims, limits and
+ * fencing are unchanged. Same lease/fence protocol: a worker writes only while it holds the
+ * current (fence, lease token), and the tenant comes from this row, never from a request.
+ */
+export const searchConsoleJobs = pgTable("search_console_jobs", {
+  id: text("id").primaryKey(),
+  tenantId: text("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  siteId: integer("site_id").notNull(),
+  requestedBy: text("requested_by"),
+  state: text("state", { enum: ["queued", "running", "completed", "failed"] }).notNull().default("queued"),
+  attempts: integer("attempts").notNull().default(0),
+  maxAttempts: integer("max_attempts").notNull().default(3),
+  fence: integer("fence").notNull().default(0),
+  leaseToken: text("lease_token"),
+  lockedBy: text("locked_by"),
+  leaseExpiresAt: timestamp("lease_expires_at", { withTimezone: true }),
+  availableAt: timestamp("available_at", { withTimezone: true }).notNull().defaultNow(),
+  lastError: text("last_error"),
+  finishedAt: timestamp("finished_at", { withTimezone: true }),
+  createdAt: createdAt(),
+}, (t) => [
+  foreignKey({ columns: [t.tenantId, t.siteId], foreignColumns: [sites.tenantId, sites.id] }).onDelete("cascade"),
+  uniqueIndex("gsc_job_active_idx").on(t.tenantId, t.siteId).where(sql`${t.state} in ('queued', 'running')`),
+  index("gsc_job_claim_idx").on(t.state, t.availableAt),
+  index("gsc_job_site_idx").on(t.tenantId, t.siteId, t.createdAt),
+  check("gsc_job_state_valid", sql`${t.state} in ('queued', 'running', 'completed', 'failed')`),
+  check("gsc_job_attempts_valid", sql`${t.attempts} >= 0 and ${t.maxAttempts} between 1 and 10 and ${t.fence} >= 0`),
+]);

@@ -1,5 +1,6 @@
 import type { AuditContext, IssueDraft } from "../types";
 import { htmlPages, isNoindex, pass, plural, ratioOutcome, unavailable, type CheckDefinition, type CheckOutcome } from "./helpers";
+import { explainCoverage, isImportantPage } from "../index-reasons";
 
 const median = (values: number[]) => {
   if (!values.length) return 0;
@@ -649,29 +650,42 @@ export const technicalChecks: CheckDefinition[] = [
     },
     run(ctx): CheckOutcome {
       const sc = ctx.searchConsole;
-      if (!sc?.configured) return unavailable("Indexing status can only be verified through Google Search Console, which isn't configured. This audit never assumes a page is indexed.");
-      if (!sc.linked) return unavailable("Search Console is connected but not linked to this site. Link the property on the Search Performance page to see Google's index status.");
+      if (!sc?.configured) return unavailable("Not verified: indexing status can only be confirmed through the site owner's Google Search Console, which isn't connected. This audit never assumes a page is indexed.");
+      if (!sc.linked) return unavailable("Not verified: Search Console is not linked to this website. Link the property on the Search Performance page to see Google's index status.");
+      if (sc.unverifiedReason) return unavailable(`Not verified: ${sc.unverifiedReason}`);
       const inspected = (sc.inspections ?? []).filter((i) => !i.error);
       if (!inspected.length) {
         const reason = sc.inspections?.find((i) => i.error)?.error;
-        return unavailable(`No URL Inspection results are available for this audit's pages yet${reason ? ` (${reason})` : ""}. Refresh Search Console data to fetch them.`);
+        return unavailable(`Not verified: no URL Inspection results are available for this audit's pages yet${reason ? ` (${reason})` : ""}. Refresh Search Console data to fetch them.`);
       }
       const notIndexed = inspected.filter((i) => i.verdict !== "PASS");
       const when = sc.fetchedAt ? ` (Google URL Inspection, ${sc.fetchedAt.toISOString().slice(0, 10)})` : "";
-      const drafts: IssueDraft[] = notIndexed.map((i) => ({
-        checkId: "tech-index-status",
-        url: i.url,
-        severity: i.verdict === "FAIL" ? "high" : "medium",
-        evidence: [
-          `Google coverage: ${i.coverageState ?? i.verdict}`,
-          i.lastCrawlTime ? `Last crawled by Google: ${i.lastCrawlTime.slice(0, 10)}` : "Google has no record of crawling this URL.",
-          i.robotsTxtState && i.robotsTxtState !== "ALLOWED" ? `robots.txt state: ${i.robotsTxtState}` : "",
-          i.indexingState && i.indexingState !== "INDEXING_ALLOWED" ? `Indexing state: ${i.indexingState}` : "",
-          i.googleCanonical && i.userCanonical && i.googleCanonical !== i.userCanonical ? `Google chose a different canonical: ${i.googleCanonical}` : "",
-        ].filter(Boolean),
-      }));
+      const position = new Map((sc.pages ?? ctx.pages?.map((p) => ({ url: p.finalUrl, depth: p.depth, inlinks: ctx.inlinks?.[p.finalUrl]?.length ?? 0 })) ?? []).map((p) => [p.url, p]));
+      const drafts: IssueDraft[] = notIndexed.map((i) => {
+        const reason = explainCoverage(i.coverageState);
+        const page = position.get(i.url);
+        const important = isImportantPage(page);
+        return {
+          checkId: "tech-index-status",
+          url: i.url,
+          title: reason && reason.title !== "Indexed" ? `${reason.title}${important ? " (important page)" : ""}` : undefined,
+          severity: i.verdict === "FAIL" || important ? "high" : "medium",
+          evidence: [
+            `Google coverage: ${i.coverageState ?? i.verdict}`,
+            "Source: Google URL Inspection (owner-authorised Search Console data), not the public crawl.",
+            reason ? `What this means: ${reason.explanation}` : "",
+            reason ? `Recommended action: ${reason.action}` : "",
+            important && page ? `Important page: ${page.depth === 0 ? "the homepage" : `${plural(page.depth, "click")} from the homepage`}, linked from ${plural(page.inlinks, "crawled page")}.` : "",
+            i.lastCrawlTime ? `Last crawled by Google: ${i.lastCrawlTime.slice(0, 10)}` : "Google has no record of crawling this URL.",
+            i.robotsTxtState && i.robotsTxtState !== "ALLOWED" ? `robots.txt state: ${i.robotsTxtState}` : "",
+            i.indexingState && i.indexingState !== "INDEXING_ALLOWED" ? `Indexing state: ${i.indexingState}` : "",
+            i.googleCanonical && i.userCanonical && i.googleCanonical !== i.userCanonical ? `Google chose a different canonical: ${i.googleCanonical}` : "",
+          ].filter(Boolean),
+        };
+      });
       const indexed = inspected.length - notIndexed.length;
-      const summary = `${indexed} of ${plural(inspected.length, "inspected page")} are indexed by Google${when}.`;
+      const importantMissing = notIndexed.filter((i) => isImportantPage(position.get(i.url))).length;
+      const summary = `${indexed} of ${plural(inspected.length, "inspected page")} are indexed by Google${when}.${importantMissing ? ` ${plural(importantMissing, "important page")} not indexed.` : ""}`;
       // Informational: weight 0 and score null keep Search Console data out of the on-site score.
       return { status: notIndexed.length ? "warning" : "pass", score: null, summary, drafts };
     },

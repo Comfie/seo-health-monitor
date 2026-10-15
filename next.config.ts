@@ -7,7 +7,7 @@ const isDev = process.env.NODE_ENV !== "production";
  * 'unsafe-inline' is required for scripts without a nonce setup; everything
  * else is locked to this origin. Dev adds 'unsafe-eval' for React Refresh.
  */
-const csp = [
+const directives = (formAction: string) => [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
@@ -16,9 +16,15 @@ const csp = [
   `connect-src 'self'${isDev ? " ws:" : ""}`,
   "frame-ancestors 'none'",
   "base-uri 'self'",
-  "form-action 'self'",
+  `form-action ${formAction}`,
   "object-src 'none'",
 ].join("; ");
+const csp = directives("'self'");
+// The beta Search Console page posts a form to /api/beta/google/connect, which redirects to
+// Google's consent screen. Browsers apply form-action to that redirect, and send "Origin: null"
+// on form posts under no-referrer (failing the canonical-Origin check). This page's URL holds no
+// tokens, so it uses same-origin (nothing is sent cross-origin, including to Google).
+const googleConnectCsp = directives("'self' https://accounts.google.com");
 
 const securityHeaders = [
   { key: "Content-Security-Policy", value: csp },
@@ -43,6 +49,7 @@ const nextConfig: NextConfig = {
       { source: "/:path*", headers: securityHeaders },
       // Invitation and reset tokens appear in beta URLs; never leak them via Referer.
       { source: "/beta/:path*", headers: [{ key: "Referrer-Policy", value: "no-referrer" }] },
+      { source: "/beta/search-console", headers: [{ key: "Content-Security-Policy", value: googleConnectCsp }, { key: "Referrer-Policy", value: "same-origin" }] },
     ];
   },
   turbopack: {

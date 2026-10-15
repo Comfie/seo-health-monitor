@@ -13,9 +13,11 @@ import { computeCounts, computeScores } from "@/lib/audit/scoring";
 import type { AuditContext, CheckResult, CrawlResult, Issue, PageData, PerformanceResult } from "@/lib/audit/types";
 import type { SaasDb } from "./db";
 import { completeJob, failJob, finalizeCancelled, JobCancelledError, LeaseLostError, reportProgress, type Lease, type QueueTiming } from "./jobs";
+import type { GoogleConfig } from "./config";
 import { BudgetExhaustedError, reserveUsage, type LimitSettings } from "./limits";
 import { activity } from "./operations-schema";
 import * as schema from "./schema";
+import { collectForAudit, storeAuditSnapshot } from "./search-console";
 
 export type RunnerDeps = {
   db: SaasDb;
@@ -25,6 +27,8 @@ export type RunnerDeps = {
   crawl?: (url: string, options: CrawlOptions) => Promise<CrawlResult>;
   pagespeed?: typeof runPageSpeed;
   pagespeedApiKey?: string;
+  /** Customer Search Console; omitted or unavailable means index status is reported as not verified. */
+  google?: GoogleConfig;
   now?: () => Date;
 };
 
@@ -107,10 +111,13 @@ async function runAudit(deps: RunnerDeps, lease: Lease, signal: AbortSignal, abo
     perf = { results: await measure(deps, lease, urls, signal, (done, total, label) => report(70 + (done / total) * 22, label, true)) };
   }
   signal.throwIfAborted();
+  // Owner-authorised Google data for this tenant only (tenant from the lease). Never fails the audit.
+  const gsc = await collectForAudit(db, deps.google, lease, audit.siteId, crawl, deps.now?.());
+  if (gsc.snapshot) report(93, "Fetched Google Search Console data", true);
+  signal.throwIfAborted();
   report(94, "Analysing findings", true);
 
-  // Search Console is not yet tenant-aware: the weight-0 index check reports "not verified".
-  const ctx: AuditContext = { ...crawl, performance: perf.results, performanceSkippedReason: perf.skipped, searchConsole: { configured: false, linked: false } };
+  const ctx: AuditContext = { ...crawl, performance: perf.results, performanceSkippedReason: perf.skipped, searchConsole: gsc.context };
   const { checks, issues, scores, counts, local } = analyseAudit(ctx);
   const meta = buildAuditMeta(crawl, perf, local, { pagespeedKeyConfigured: !!(deps.pagespeedApiKey ?? config.pagespeedApiKey), limits: { maxPages, pagespeedPages } });
   const now = deps.now?.() ?? new Date();
@@ -126,6 +133,8 @@ async function runAudit(deps: RunnerDeps, lease: Lease, signal: AbortSignal, abo
     await insertChunks(checks, (rows) => tx.insert(schema.checks).values(rows.map((c) => checkRow(lease.tenantId, lease.auditId, c))));
     await insertChunks(issues, (rows) => tx.insert(schema.issues).values(rows.map((i) => issueRow(lease.tenantId, lease.auditId, i))).onConflictDoNothing());
     await insertChunks(perf.results, (rows) => tx.insert(schema.performanceResults).values(rows.map((r) => ({ tenantId: lease.tenantId, auditId: lease.auditId, ...performanceRow(r) }))));
+    await tx.delete(schema.searchSnapshots).where(and(eq(schema.searchSnapshots.tenantId, t), eq(schema.searchSnapshots.auditId, a)));
+    await storeAuditSnapshot(tx, gsc.snapshot);
     await tx.update(schema.audits).set({
       status: "completed", stage: "Completed", progress: 100, overallScore: scores.overall, categoryScores: scores.categories,
       counts: { ...counts }, pagesScanned: crawl.pages.length, meta, completedAt: now, error: null,

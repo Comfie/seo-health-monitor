@@ -168,11 +168,13 @@ describe("beta code never reaches global Phase 1 data", () => {
     expect(files.length).toBeGreaterThan(20);
     // Type-only imports are erased at compile time and cannot reach data. The AI consultant is
     // stateless (it receives an audit and returns text), so it is allowed; its budget is tenant-scoped.
-    const forbidden = /from ["']@\/lib\/(db|audit\/(repository|views|queue|runner|performance-rerun|index-status|progress)|integrations\/|rate-limit|ai\/(?!consultant["']))/;
+    // The Google HTTP client and the snapshot collector are stateless (no storage, no process-wide
+    // token); the Phase 1 Search Console service and its cookie state stay forbidden.
+    const forbidden = /from ["']@\/lib\/(db|audit\/(repository|views|queue|runner|performance-rerun|index-status|progress)|integrations\/(?!search-console\/(google|collect)["'])|rate-limit|ai\/(?!consultant["']))/;
     const runtimeImports = (file: string) => readFileSync(file, "utf8").split("\n").filter((line) => !/^\s*import type /.test(line)).join("\n");
     expect(files.filter((file) => forbidden.test(runtimeImports(file)))).toEqual([]);
     // Shared modules that beta code does import must not reach global data themselves.
-    const shared = ["src/lib/ai/consultant.ts", "src/lib/audit/pipeline.ts", "src/lib/reports/export.ts", "src/lib/reports/pdf.ts", "src/lib/reports/fix-request.ts", "src/lib/performance/run.ts", "src/lib/crawler/crawl.ts"];
+    const shared = ["src/lib/ai/consultant.ts", "src/lib/audit/pipeline.ts", "src/lib/reports/export.ts", "src/lib/reports/pdf.ts", "src/lib/reports/fix-request.ts", "src/lib/performance/run.ts", "src/lib/crawler/crawl.ts", "src/lib/integrations/search-console/google.ts", "src/lib/integrations/search-console/collect.ts", "src/lib/audit/index-reasons.ts"];
     expect(shared.filter((file) => forbidden.test(runtimeImports(file)))).toEqual([]);
   });
 });

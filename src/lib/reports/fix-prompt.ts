@@ -122,6 +122,7 @@ export const VERIFY_HINTS: Record<string, (url: string) => string> = {
   "onpage-lang": (u) => `curl -s ${shellQuote(u)} | grep -io '<html[^>]*>'`,
   "tech-canonical": (u) => `curl -s ${shellQuote(u)} | grep -io '<link[^>]*rel="canonical"[^>]*>'`,
   "tech-indexability": (u) => `curl -sI ${shellQuote(u)} | grep -i x-robots-tag; curl -s ${shellQuote(u)} | grep -io '<meta name="robots"[^>]*>'`,
+  "tech-index-status": (u) => `curl -s -o /dev/null -w '%{http_code}\\n' ${shellQuote(u)}; curl -s ${shellQuote(u)} | grep -io '<meta name="robots"[^>]*>'   # expect 200 and no noindex; then use URL Inspection > Request indexing in Search Console`,
   "tech-host-canonical": (u) => `curl -sI ${shellQuote(u)} | grep -iE '^(HTTP|location)'   # expect 301 to the main host`,
   "tech-http-redirect": (u) => `curl -sI ${shellQuote(u)} | grep -iE '^(HTTP|location)'   # expect 301 to https`,
   "tech-status-codes": (u) => `curl -s -o /dev/null -w '%{http_code}\\n' ${shellQuote(u)}   # expect 200 or a deliberate 301`,

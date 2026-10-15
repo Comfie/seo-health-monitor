@@ -69,6 +69,7 @@ const BETA_NAV: { label: string; items: NavItem[] }[] = [
       { href: "/beta", label: "Dashboard", icon: LayoutDashboard },
       { href: "/beta/websites", label: "Websites", icon: Globe },
       { href: "/beta/audits", label: "Audit history", icon: History },
+      { href: "/beta/search-console", label: "Search performance", icon: TrendingUp },
     ],
   },
   { label: "Account", items: [{ href: "/beta/account", label: "Account settings", icon: UserCog }] },

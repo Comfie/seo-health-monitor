@@ -36,6 +36,11 @@ Accepted trade-offs of one environment: one shared private network (the beta can
 | Operator bootstrap, hosted operator checks and Resend key replacement | **Approved and completed 15 October 2026 local time**; evidence in the ledger. Does not approve G4. |
 | G4 `PHASE2_INVITATIONS_ENABLED=true` for synthetic, allowlisted testers | **Approved 15 October 2026 for the two previously approved Gmail plus-addresses only.** Execution and results: [controlled internal report](hosted-g4-test-report.md). No external beta approval. |
 | G5 Production SQLite backup ([migration guide](migration-and-rollback.md#production-backup-approval-required)) | Not yet approved |
+| SC1 Beta-only Google OAuth client and `PHASE2_GOOGLE_*` variables on beta web + worker | Not yet approved ([G5 Search Console report](g5-search-console-report.md#hosted-verification-plan-approval-required-nothing-below-has-been-done)) |
+| SC2 Apply additive migration `0003_g5_search_console` to beta PostgreSQL | Not yet approved |
+| SC3 Deploy G5 source to beta web + worker | Not yet approved |
+| SC4 Hosted real-Google A/B tests, G4 regression, temporary two-replica worker test | Not yet approved |
+| SC5 Beta-only `PAGESPEED_API_KEY` on beta worker + web | Not yet approved |
 
 No gate authorises inviting external users, public registration, Phase 1 changes or monetisation.
 
@@ -102,6 +107,8 @@ Secrets were generated locally and piped with `railway variable set NAME --stdin
 | Not set | `PHASE2_WORKER` (separate worker), `PHASE2_TRUSTED_IP_HEADER` (until measured, §7), `PAGESPEED_API_KEY` (Google's anonymous quota; 429s appear as "not measured"), `ANTHROPIC_API_KEY`, `GOOGLE_CLIENT_*`, `DATABASE_URL`, `PRODUCTION_DATABASE_URL`. Other limits use code defaults. | |
 
 `DATABASE_PATH=/data/seo-health.db` comes from the image, inside the beta's own volume, which satisfies `validateRailwayEnvironment`.
+
+**G5 (Search Console) additions, not yet set:** `PHASE2_GOOGLE_CLIENT_ID`, `PHASE2_GOOGLE_CLIENT_SECRET` (a separate OAuth client from Phase 1, which the beta refuses to reuse), `PHASE2_GOOGLE_TOKEN_SECRET` (32+ random characters, distinct from `APP_SECRET` and `PHASE2_AUTH_SECRET`), optional `PHASE2_GSC_MAX_INSPECTIONS` (default 10). Authorised redirect URI: `https://seo-beta-web-production.up.railway.app/api/beta/google/callback`. Set the same values on the worker (by reference). Also missing on both services: `PAGESPEED_API_KEY` (SC5). Without the Google variables the beta runs normally and Search Console shows as unavailable.
 
 ### `seo-beta-worker`
 

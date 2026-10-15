@@ -41,7 +41,7 @@ const outbox: Mail[] = [];
 const password = `${randomUUID()}!Aa`;
 const config: BetaConfig = {
   databaseUrl: "pglite://memory", origin, authSecret: randomUUID() + randomUUID(), registration: "invite-only",
-  invitationsEnabled: true, invitationTtlHours: 72, email: { transport: "log", allowlist: [] },
+  invitationsEnabled: true, invitationTtlHours: 72, email: { transport: "log", allowlist: [] }, google: { state: "unavailable", problem: "Not configured in this test.", redirectUri: "https://beta.example.com/api/beta/google/callback" },
 };
 const send = async (m: Mail) => { outbox.push(m); };
 const limits = (() => { const s = readLimitSettings({}); return { tenant: { ...s.tenant, auditsPerMonth: 20 }, global: { ...s.global, maxRunning: 5 } }; })();

@@ -9,6 +9,15 @@ import type { SaasDb } from "./db";
 import * as schema from "./schema";
 import { imports } from "./operations-schema";
 
+const PHASE2_ONLY_DEFAULTS: Record<string, string | null> = {
+  "google_accounts.google_subject": null,
+  "google_accounts.status": "active",
+  "google_accounts.updated_at": null,
+  "search_console_connections.permission_level": null,
+  "search_console_connections.last_refreshed_at": null,
+  "search_console_connections.last_error": null,
+};
+
 const tables = [schema.sites, schema.audits, schema.pages, schema.checks, schema.issues, schema.performanceResults, schema.googleAccounts, schema.searchConsoleConnections, schema.searchSnapshots] as const;
 
 /** Import only an immutable, verified SQLite backup into an EMPTY staging domain.
@@ -55,6 +64,9 @@ export async function importSqliteBackup(db: SaasDb, backupPath: string, tenantI
             else if (name === "google_accounts" && column.name === "user_id") value = administratorId;
             else if (name === "search_console_connections" && column.name === "google_account_id") value = googleRows[0]?.id;
             else if (column.name === "display_name") value = sourceRow.host;
+            // Columns Phase 1 never had (G5). The imported Phase 1 ciphertext is not readable with the
+            // beta's tenant-bound token key, so the first use marks it revoked and the owner reconnects.
+            else if (value === undefined && `${name}.${column.name}` in PHASE2_ONLY_DEFAULTS) value = PHASE2_ONLY_DEFAULTS[`${name}.${column.name}`];
             if (value === undefined) throw new Error(`Source column missing: ${name}.${column.name}`);
             // SQLite stores timestamps as Unix milliseconds and JSON as text.
             if (value !== null && column.dataType === "date") value = new Date(Number(value)).toISOString();

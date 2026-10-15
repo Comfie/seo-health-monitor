@@ -208,6 +208,10 @@ export interface SearchConsoleContext {
   property?: string;
   fetchedAt?: Date;
   inspections?: IndexInspection[];
+  /** Why owner-authorised data is unavailable right now (revoked access, Google error, quota). */
+  unverifiedReason?: string;
+  /** Crawl position of inspected pages, so findings can flag important pages. */
+  pages?: { url: string; depth: number; inlinks: number }[];
 }
 
 export interface AuditContext extends CrawlResult {

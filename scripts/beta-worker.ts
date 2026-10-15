@@ -19,9 +19,9 @@ if (read.config.databaseUrl.startsWith("pglite:")) {
 }
 const db = createSaasDb(read.config.databaseUrl);
 const concurrency = Number.parseInt(process.env.PHASE2_WORKER_CONCURRENCY ?? "1", 10);
-const worker = createWorker({ db, settings: readLimitSettings(), concurrency: Number.isFinite(concurrency) ? Math.min(4, Math.max(1, concurrency)) : 1 });
+const worker = createWorker({ db, settings: readLimitSettings(), google: read.config.google, concurrency: Number.isFinite(concurrency) ? Math.min(4, Math.max(1, concurrency)) : 1 });
 worker.start();
-console.log(`[beta-worker] ${worker.workerId} started`);
+console.log(`[beta-worker] ${worker.workerId} started (search console: ${read.config.google.state})`);
 
 // The worker's own timers are unref'd (so it never holds a web server open). A standalone
 // process must stay alive on its own: otherwise, while PostgreSQL is unreachable and no socket
