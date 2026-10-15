@@ -27,3 +27,9 @@ New presentational components `workspace-ui.tsx` and `admin-activity.tsx` give t
 - Live browser checks found an existing invitation timestamp hydration mismatch: UTC on Railway versus local time in the browser. Invitation timestamps now use an explicit UTC zone and label; usage number formatting also uses an explicit locale. The final hosted run must have no unhandled browser errors.
 
 The owner's statement that manual checklist items 1–5 worked is recorded as **owner-reported verification**; this is distinct from automated evidence. Production cutover approval remains pending. UI work does not approve that cutover or any production database/role changes.
+
+## Final hosted result
+
+Beta web now runs **`6d2a9a043032b1bcbdbc2adeac56682449fe834a`**, deployment `8dcf3927-3dc9-43a3-bf7d-a50f80d118ed` (SUCCESS). **21 live browser checks passed** using `en-ZA` locale and `Africa/Johannesburg` timezone: dashboard rendering; one selected menu item; keyboard account disclosure; visible save/reset/suspend buttons and a filled 40px primary button; formatted activity; retention preview; monitoring table, usage meters and refresh; 390px/768px page overflow checks; mobile account actions and navigation; reduced-motion behavior; and zero unhandled browser errors. Tests were read-only, with no account submissions or invitations.
+
+Final production comparison at 11:15 UTC confirms original deployment, revision and variables unchanged. Sanitized verification results are in `evidence/ui-polish/live-browser-results.json` and `production-preservation.json`. Before/after screenshots are retained in the private temporary operator evidence directory `/private/tmp/seo-ui-polish`; live screenshots contain internal account information and are not published in Git. The separate original local development server was not stopped or replaced.

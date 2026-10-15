@@ -1,0 +1,87 @@
+[
+  {
+    "name": "Polished dashboard is deployed",
+    "passed": true
+  },
+  {
+    "name": "Only administration is selected",
+    "passed": true
+  },
+  {
+    "name": "Account controls open with keyboard",
+    "passed": true
+  },
+  {
+    "name": "Save, reset and suspension buttons are visible",
+    "passed": true
+  },
+  {
+    "name": "Primary account button has visible fill and 40px height",
+    "passed": true,
+    "detail": "{\"background\":\"rgb(14, 124, 116)\",\"height\":40}"
+  },
+  {
+    "name": "Activity has formatted events",
+    "passed": true
+  },
+  {
+    "name": "Cleanup remains disabled",
+    "passed": true
+  },
+  {
+    "name": "Only Operations is selected",
+    "passed": true
+  },
+  {
+    "name": "Monitoring has real usage meters",
+    "passed": true
+  },
+  {
+    "name": "Queue table renders",
+    "passed": true
+  },
+  {
+    "name": "Refresh status returns the monitoring screen",
+    "passed": true
+  },
+  {
+    "name": "No 390px page overflow: dashboard",
+    "passed": true
+  },
+  {
+    "name": "No 390px page overflow: admin",
+    "passed": true
+  },
+  {
+    "name": "Account buttons fit on mobile",
+    "passed": true
+  },
+  {
+    "name": "No 390px page overflow: operations",
+    "passed": true
+  },
+  {
+    "name": "No 768px page overflow: dashboard",
+    "passed": true
+  },
+  {
+    "name": "No 768px page overflow: admin",
+    "passed": true
+  },
+  {
+    "name": "No 768px page overflow: operations",
+    "passed": true
+  },
+  {
+    "name": "Mobile navigation selects only Operations",
+    "passed": true
+  },
+  {
+    "name": "Reduced motion retains all account controls",
+    "passed": true
+  },
+  {
+    "name": "No unhandled browser errors",
+    "passed": true
+  }
+]
