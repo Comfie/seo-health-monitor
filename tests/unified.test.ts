@@ -22,6 +22,9 @@ describe('unified application boundaries',()=>{
   for(const[path,target]of [['/api/audits/7/export?format=pdf','/api/beta/audits/7/export?format=pdf'],['/api/sites/4/search-console','/api/beta/websites/4/search-console'],['/api/integrations/google/callback?state=x','/api/beta/google/callback?state=x'],['/api/health','/api/beta/health']]){
    const res=proxy(new NextRequest('https://app.example.com'+path));expect(res.headers.get('x-middleware-rewrite')).toBe('https://app.example.com'+target);
   }
+  // Rewrites stay on the receiving server: platform health checks arrive on an internal host and
+  // must not be proxied through the public origin (which still serves the old release mid-deploy).
+  expect(proxy(new NextRequest('http://10.0.0.5:3000/api/health')).headers.get('x-middleware-rewrite')).toBe('http://10.0.0.5:3000/api/beta/health');
   expect(proxy(new NextRequest('https://app.example.com/audits/7/report')).headers.get('location')).toBe('https://app.example.com/beta/audits/7');
   expect(proxy(new NextRequest('https://app.example.com/api/auth/login',{method:'POST',headers:{origin:'https://app.example.com'}})).status).toBe(404);
   expect(proxy(new NextRequest('https://app.example.com/beta',{headers:{cookie:'shm_session=legacy'}})).headers.get('location')).toBe('https://app.example.com/beta/login');

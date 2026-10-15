@@ -27,7 +27,10 @@ export function proxy(request: NextRequest) {
     if (ready.state !== 'ready') return NextResponse.json({ error: 'Application configuration unavailable.' }, { status: 503 });
     const destination = unifiedDestination(request.nextUrl);
     if (!destination) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
-    const target = new URL(destination.path, ready.config.origin);
+    // Rewrites are served by this same server (an absolute rewrite to the public origin would be
+    // proxied over the internet, e.g. to the previous release during a deploy's health check);
+    // redirects send the browser to the canonical origin.
+    const target = new URL(destination.path, destination.rewrite ? request.nextUrl.origin : ready.config.origin);
     // Keep bookmark filters and report formats; the explicit category mapping takes precedence.
     for (const [key, value] of request.nextUrl.searchParams) if (!target.searchParams.has(key)) target.searchParams.append(key, value);
     return destination.rewrite ? NextResponse.rewrite(target) : NextResponse.redirect(target, 307);
