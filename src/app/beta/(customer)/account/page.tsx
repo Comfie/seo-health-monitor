@@ -1,3 +1,4 @@
+import { LifecycleControls } from "@/components/beta/lifecycle-controls";
 import { Suspense } from "react";
 import { and, desc, eq, gt } from "drizzle-orm";
 import Loading from "@/app/(app)/loading";
@@ -9,7 +10,7 @@ import { getCustomerPage } from "@/lib/saas/page";
 export const metadata = { title: "Account settings" };
 
 async function AccountContent() {
-  const { runtime, tenant, user, sessionId } = await getCustomerPage();
+  const { runtime, tenant, user, sessionId, isAdmin } = await getCustomerPage();
   // Session IDs and metadata only; tokens and IP addresses are not sent to the page.
   const sessions = await runtime.db.select({ id: session.id, userAgent: session.userAgent, createdAt: session.createdAt, expiresAt: session.expiresAt })
     .from(session).where(and(eq(session.userId, tenant.userId), gt(session.expiresAt, new Date()))).orderBy(desc(session.createdAt)).limit(20);
@@ -30,6 +31,7 @@ async function AccountContent() {
           <PasswordForm />
         </div>
       </Section>
+      <Section title="Your data and privacy"><LifecycleControls isAdmin={isAdmin} /></Section>
       <Section title="Signed-in sessions" description="Sessions expire after 7 days. Sign out any device you don't recognise, then change your password.">
         <SessionList sessions={sessions.map((s) => ({ id: s.id, userAgent: s.userAgent, createdAt: s.createdAt.toISOString(), expiresAt: s.expiresAt.toISOString(), current: s.id === sessionId }))} />
       </Section>

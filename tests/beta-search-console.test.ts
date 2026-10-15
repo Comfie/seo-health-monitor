@@ -15,6 +15,8 @@ import { claimRefresh, completeRefresh, recoverExpiredRefreshes } from "@/lib/sa
 import { executeJob } from "@/lib/saas/audit-runner";
 import { clearSearchConsoleTokenCache, runRefreshJob } from "@/lib/saas/search-console";
 import { createWorker } from "@/lib/saas/worker";
+import {siteProgress} from '@/lib/saas/progress';
+import {requireTenant} from '@/lib/saas/tenant';
 import { setBetaRuntimeForTests, type BetaRuntime } from "@/lib/saas/server";
 import type { CrawlOptions } from "@/lib/crawler/crawl";
 import type { PerformanceResult } from "@/lib/audit/types";
@@ -665,6 +667,21 @@ describe("revocation, disconnection and shared Google accounts", () => {
 });
 
 describe("secrets", () => {
+  it('keeps the migrated SEO progress view scoped to the session tenant',async()=>{
+    const context=await requireTenant(db,runtime.auth,new Headers({cookie:alice}));
+    const progress=await siteProgress(db,context,aliceSite);
+    expect(progress.audits.length).toBeGreaterThan(0);
+    expect(progress.snapshots.every(s=>s.tenantId===aliceTenant)).toBe(true);
+    await expect(siteProgress(db,context,bobSite)).rejects.toThrow('Resource unavailable');
+  });
+  it('never revokes at Google when an intentionally reused client may have grants outside this database',async()=>{
+    const before=fake.revocations;
+    google.sharedLegacyClient=true;
+    try{
+      expect((await post(disconnectRoute.POST,'/api/beta/google/disconnect',bob)).data).toEqual({disconnected:true,revokedAtGoogle:false});
+      expect(fake.revocations).toBe(before);
+    }finally{delete google.sharedLegacyClient;}
+  });
   it("never exposes Google tokens in responses, redirects, cookies, exports or logs", () => {
     const issued = fake.issued.filter(Boolean);
     expect(issued.length).toBeGreaterThan(5);

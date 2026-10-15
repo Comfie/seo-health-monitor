@@ -1,3 +1,4 @@
+import { PrivacyLinks } from "./privacy-links";
 import { Activity } from "lucide-react";
 import { BrandFooter } from "@/components/app/brand-footer";
 
@@ -18,6 +19,7 @@ export function AuthCard({ title, children }: { title: string; children: React.R
           </div>
           <h1 className="mb-4 text-lg font-semibold">{title}</h1>
           {children}
+          <PrivacyLinks />
         </div>
       </main>
       <BrandFooter />

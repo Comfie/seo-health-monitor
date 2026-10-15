@@ -1,4 +1,5 @@
 import "server-only";
+import { recordEvent } from "./telemetry";
 import { betterAuth } from "better-auth";
 import { APIError, createAuthMiddleware } from "better-auth/api";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
@@ -127,6 +128,8 @@ export function createSaasAuth(options: {
         return Response.json({ error: "Not found." }, { status: 404, headers: { "cache-control": "no-store" } });
       }
       const response = await auth.handler(request);
+      if (request.method === 'POST' && path === '/sign-in/email') await recordEvent(options.db, response.ok ? 'auth.success' : 'auth.failure');
+      if (request.method === 'POST' && path === '/sign-out' && response.ok) await recordEvent(options.db, 'auth.signout');
       response.headers.set("cache-control", "no-store");
       if (response.status === 429) response.headers.set("retry-after", response.headers.get("x-retry-after") ?? "60");
       return response;

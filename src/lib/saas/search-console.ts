@@ -1,4 +1,5 @@
 import "server-only";
+import { recordEvent } from "./telemetry";
 import { createHash, randomUUID } from "node:crypto";
 import { and, asc, desc, eq, isNull, lt, ne } from "drizzle-orm";
 import { runChecks } from "@/lib/audit/checks";
@@ -51,6 +52,8 @@ const STATE_TTL_MS = 10 * 60_000;
 /** Browser binding for a pending authorisation (HttpOnly, scoped to the Google routes). */
 export const GSC_BROWSER_COOKIE = "shm_beta_gsc";
 export const GSC_COOKIE_PATH = "/api/beta/google";
+// The preserved Phase 1 callback and new connect route share /api, including after rewrites.
+export const googleCookiePath = (google: GoogleConfig) => google.redirectUri.endsWith('/api/integrations/google/callback') ? '/api' : GSC_COOKIE_PATH;
 export const SEARCH_PAGE = "/beta/search-console";
 
 const tokenPurpose = (tenantId: string) => `beta-google-refresh-token:${tenantId}`;
@@ -126,6 +129,7 @@ export async function tenantAccessToken(db: SaasDb, google: GoogleReady, tenantI
     if (account.lastError) await db.update(schema.googleAccounts).set({ lastError: null }).where(and(eq(schema.googleAccounts.tenantId, tenantId), eq(schema.googleAccounts.id, account.id)));
     return { token: tokens.access_token, account };
   } catch (error) {
+    await recordEvent(db, "google.refresh_failure", tenantId);
     if (error instanceof GoogleApiError && error.needsReconnect) {
       await markRevoked(db, account);
       throw new SearchConsoleError("reconnect", REVOKED_MESSAGE);
@@ -140,6 +144,9 @@ export async function tenantAccessToken(db: SaasDb, google: GoogleReady, tenantI
  * other account's access. The local credential is deleted either way by the caller.
  */
 async function revokeUnlessShared(db: Db, google: GoogleReady, account: AccountRow) {
+  // A legacy deployment or an imported grant may exist outside this database. Never revoke
+  // at Google when the operator intentionally shares a client; local disconnect still erases it.
+  if (google.sharedLegacyClient || !account.googleSubject) return false;
   if (account.googleSubject) {
     const [other] = await db.select({ id: schema.googleAccounts.id }).from(schema.googleAccounts)
       .where(and(eq(schema.googleAccounts.googleSubject, account.googleSubject), ne(schema.googleAccounts.tenantId, account.tenantId))).limit(1);

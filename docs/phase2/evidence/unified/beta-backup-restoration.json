@@ -1,0 +1,9 @@
+{
+  "erasedAccounts": 0,
+  "tablesVerified": 25,
+  "foreignKeys": "enforced throughout restore",
+  "sequences": 10,
+  "encrypted": true,
+  "migration0004Compatible": true,
+  "existingDataUnchanged": true
+}

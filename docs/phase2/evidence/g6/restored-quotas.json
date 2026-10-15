@@ -1,0 +1,27 @@
+{
+  "checkedAt": "2026-10-15T07:46:59.897Z",
+  "restored": {
+    "A": {
+      "website_limit": null,
+      "monthly_audit_limit": null,
+      "page_limit": null,
+      "concurrent_audit_limit": null,
+      "monthly_pagespeed_limit": null,
+      "monthly_ai_limit": null
+    },
+    "B": {
+      "website_limit": null,
+      "monthly_audit_limit": null,
+      "page_limit": null,
+      "concurrent_audit_limit": null,
+      "monthly_pagespeed_limit": null,
+      "monthly_ai_limit": null
+    }
+  },
+  "preserved": {
+    "usage": "32",
+    "sites": "2",
+    "audits": "22",
+    "activity": "55"
+  }
+}

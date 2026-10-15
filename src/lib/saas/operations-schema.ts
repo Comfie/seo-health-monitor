@@ -79,3 +79,28 @@ export const imports = pgTable("sqlite_imports", {
   counts: jsonb("counts").$type<Record<string, number>>().notNull(),
   importedAt: timestamp("imported_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// Fixed-code events only. No free-text payloads, URLs, credentials or report content.
+export const operationalEvents = pgTable("operational_events", {
+  id: text("id").primaryKey(),
+  kind: text("kind").notNull(),
+  tenantId: text("tenant_id").references(() => tenants.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [index("operational_events_kind_time_idx").on(t.kind, t.createdAt)]);
+
+export const systemHeartbeats = pgTable("system_heartbeats", {
+  id: text("id").primaryKey(),
+  role: text("role", { enum: ["web", "worker"] }).notNull(),
+  running: integer("running").notNull().default(0),
+  lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+  lastProgressAt: timestamp("last_progress_at", { withTimezone: true }),
+});
+
+// No FK: survives erasure. Hashes of random identifiers, never email/password/token hashes.
+// Also exported to the restricted deletion ledger before any backup is restored.
+export const deletionRecords = pgTable("account_deletion_records", {
+  id: text("id").primaryKey(),
+  userHash: text("user_hash").notNull().unique(),
+  tenantHash: text("tenant_hash").notNull().unique(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }).notNull().defaultNow(),
+});

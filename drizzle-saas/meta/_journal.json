@@ -29,6 +29,13 @@
       "when": 1792043942319,
       "tag": "0003_g5_search_console",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792050559947,
+      "tag": "0004_g6_operations",
+      "breakpoints": true
     }
   ]
 }

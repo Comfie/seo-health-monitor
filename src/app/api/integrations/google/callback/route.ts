@@ -2,8 +2,10 @@ import { guard } from "@/lib/security/guard";
 import { NextResponse, type NextRequest } from "next/server";
 import { OAUTH_COOKIE, readOAuthState } from "@/lib/integrations/search-console/oauth-state";
 import { completeConnection } from "@/lib/integrations/search-console/service";
+import { GET as tenantCallback } from "@/app/api/beta/google/callback/route";
 
 export async function GET(request: NextRequest) {
+  if (process.env.PHASE2_UNIFIED === "true") return tenantCallback(request);
   const denied = guard(request);
   if (denied) return denied;
   const params = request.nextUrl.searchParams;

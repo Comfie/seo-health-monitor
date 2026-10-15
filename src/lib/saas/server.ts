@@ -9,11 +9,14 @@ import { createMailer, type Mailer } from "./email";
 import type { LimitSettings } from "./limits";
 import { administrators, rateLimit } from "./schema";
 import { AccessDeniedError, requireTenant, type TenantContext } from "./tenant";
+import { logOperationalEvent, recordHeartbeat } from "./telemetry";
 
 /** `limits` defaults to the server-side settings read from the environment (src/lib/saas/limits.ts). */
 export type BetaRuntime = { config: BetaConfig; db: SaasDb; auth: SaasAuth; mail: Mailer; limits?: LimitSettings };
 export type BetaState = { state: "disabled" } | { state: "misconfigured"; problem: string } | { state: "ready"; runtime: BetaRuntime };
 
+const webId = `web-${randomUUID()}`;
+let lastWebHeartbeat = 0;
 const globalRef = globalThis as typeof globalThis & { __shmBeta?: { key: string; runtime: Promise<BetaRuntime> }; __shmBetaOverride?: BetaRuntime | null };
 
 /** Local development only: an on-disk PGlite database, migrated on first use. */
@@ -55,7 +58,12 @@ export async function getBeta(): Promise<BetaState> {
   const key = JSON.stringify(read.config);
   if (globalRef.__shmBeta?.key !== key) globalRef.__shmBeta = { key, runtime: build(read.config) };
   try {
-    return { state: "ready", runtime: await globalRef.__shmBeta.runtime };
+    const runtime = await globalRef.__shmBeta.runtime;
+    if (Date.now() - lastWebHeartbeat > 30_000) {
+      lastWebHeartbeat = Date.now();
+      await recordHeartbeat(runtime.db, webId, "web").catch(() => logOperationalEvent("database.failure"));
+    }
+    return { state: "ready", runtime };
   } catch {
     globalRef.__shmBeta = undefined;
     return { state: "misconfigured", problem: "The beta database is unavailable." };
@@ -104,7 +112,8 @@ export async function withCustomer(request: Request, handler: (ctx: { runtime: B
     tenant = await requireTenant(runtime.db, runtime.auth, request.headers);
   } catch (error) {
     if (error instanceof AccessDeniedError) return json(401, { error: "Sign in required." });
-    throw error;
+    logOperationalEvent("database.failure");
+    return json(503, { error: "The beta is temporarily unavailable. Please try again shortly." });
   }
   // Non-administrators get the same 404 as a missing route: no admin surface is advertised.
   if (options.admin && !(await isAdministrator(runtime.db, tenant.userId))) return notFound();
@@ -112,7 +121,8 @@ export async function withCustomer(request: Request, handler: (ctx: { runtime: B
     return await handler({ runtime, tenant });
   } catch (error) {
     if (error instanceof AccessDeniedError) return denied();
-    throw error;
+    logOperationalEvent("database.failure");
+    return json(503, { error: "The beta is temporarily unavailable. Please try again shortly." });
   }
 }
 

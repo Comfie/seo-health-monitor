@@ -1,4 +1,5 @@
 import "server-only";
+import { recordEvent, recordHeartbeat } from "./telemetry";
 import { randomUUID } from "node:crypto";
 import { executeJob, type RunnerDeps, type RunOutcome } from "./audit-runner";
 import { claimRefresh, recoverExpiredRefreshes, releaseRefresh, type RefreshLease } from "./gsc-jobs";
@@ -31,6 +32,7 @@ export function createWorker(options: WorkerOptions) {
   let timer: NodeJS.Timeout | undefined;
   let ticking = false;
   let stopping = false;
+  let lastBeat = 0;
   const now = () => options.now?.() ?? new Date();
 
   function run(lease: Lease) {
@@ -51,7 +53,13 @@ export function createWorker(options: WorkerOptions) {
       running.delete(lease.jobId);
       if (!stopping) void tick();
     });
-    done.then((outcome) => options.onOutcome?.(lease, outcome), () => {});
+    done.then(async (outcome) => {
+      options.onOutcome?.(lease, outcome);
+      if (outcome === 'completed' || outcome === 'failed') {
+        if (lease.kind === 'audit') await recordEvent(options.db, outcome === 'completed' ? 'audit.completed' : 'audit.failed', lease.tenantId);
+        await recordHeartbeat(options.db, workerId, 'worker', running.size, true, now()).catch(() => {});
+      }
+    }, () => {});
     running.set(lease.jobId, { lease, controller, done });
     return done;
   }
@@ -60,6 +68,10 @@ export function createWorker(options: WorkerOptions) {
     if (ticking || stopping) return;
     ticking = true;
     try {
+      if (now().getTime() - lastBeat > 30_000) {
+        await recordHeartbeat(options.db, workerId, 'worker', running.size, false, now());
+        lastBeat = now().getTime();
+      }
       await recoverExpiredJobs(options.db, timing, now());
       while (!stopping && running.size < concurrency) {
         const lease = await claimJob(options.db, workerId, options.settings, timing, now());
@@ -67,7 +79,8 @@ export function createWorker(options: WorkerOptions) {
         void run(lease);
       }
     } catch {
-      console.error(`[beta-worker] ${workerId} poll failed; retrying`);
+      await recordEvent(options.db, 'worker.poll_failed');
+      await recordEvent(options.db, 'database.failure');
     } finally {
       ticking = false;
     }

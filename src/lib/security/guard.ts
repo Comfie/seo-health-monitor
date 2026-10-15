@@ -7,6 +7,7 @@ import { authMode, authProblem, isAuthenticated, isSameOrigin } from "./auth";
  * Returns a response to send, or null to continue.
  */
 export function guard(request: Request): NextResponse | null {
+  if (process.env.PHASE2_UNIFIED === "true") return NextResponse.json({ error: "Legacy endpoint retired. Use the account application." }, { status: 410 });
   if (authMode() === "misconfigured") return NextResponse.json({ error: authProblem() }, { status: 503 });
   if (!["GET", "HEAD", "OPTIONS"].includes(request.method) && !isSameOrigin(request)) {
     return NextResponse.json({ error: "Cross-origin request blocked." }, { status: 403 });

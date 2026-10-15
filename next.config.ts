@@ -50,6 +50,7 @@ const nextConfig: NextConfig = {
       // Invitation and reset tokens appear in beta URLs; never leak them via Referer.
       { source: "/beta/:path*", headers: [{ key: "Referrer-Policy", value: "no-referrer" }] },
       { source: "/beta/search-console", headers: [{ key: "Content-Security-Policy", value: googleConnectCsp }, { key: "Referrer-Policy", value: "same-origin" }] },
+      { source: "/search-console", headers: [{ key: "Content-Security-Policy", value: googleConnectCsp }, { key: "Referrer-Policy", value: "same-origin" }] },
     ];
   },
   turbopack: {

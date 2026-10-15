@@ -1,16 +1,31 @@
+# Current direction: one unified application
+
+The owner's 15 October instruction supersedes the earlier separate-beta-product and separate-Google-client requirements. See [the unified migration review](unified-migration-plan.md) for actual production backup/rehearsal evidence, explicit existing-client/key reuse, preserved callback, tenant routing, and the production cutover approval gate. Earlier stage reports below remain historical evidence.
+
 # Phase 2 implementation ledger
 
 Updated 15 October 2026 (Africa/Johannesburg). Stages 1 (foundation), 2 (customer onboarding and website management) and 3 (multi-tenant audit engine) are implemented on `phase2-multiuser`. The approved controlled G4 A/B run passed **229 hosted checks and 25 browser checks**, with **211 local tests**, type checking and lint passing. Source and evidence are committed on this branch; nothing was pushed or merged into production. This is **not a completed SaaS or an external beta approval**. No monetisation is included. Phase 1's service and data remain unchanged; no external tester was invited; unrestricted public registration does not exist.
 
-## G5: multi-tenant Google Search Console (local stage complete, hosted pending approval)
+## G6: administration, privacy and beta readiness (current)
 
-Prepared 15 October 2026 on `phase2-multiuser`, on top of the tested G4 release `d31e130`. Uncommitted; nothing was pushed or deployed. Staging and Phase 1 were not changed; staging was only listed read-only (variable names).
+G6 source is implemented locally, based on accepted/deployed G5 `04d8ca0fa3728ab175d483f1a37c187fc0dd3ad3`. No G6 deploy, push, merge or external invitation. A/B's original quota overrides and the one-replica worker baseline were restored and read back without changing usage/customer/audit history. Phase 1 remains unchanged.
 
-- **Implemented:** per-tenant Google OAuth (POST start, server-side hashed single-use state bound to tenant, user, session and a browser nonce, PKCE S256, read-only scopes, no incremental scope merging), tenant-bound encrypted refresh tokens under a beta-only secret, revocation detection, safe disconnect (no revocation of a grant another tenant shares), property listing and linking with domain and URL-prefix suitability checks, a separate fenced refresh-job queue, real search-performance views, owner-authorised index status in audits (Google's reasons, important pages, recommendations, Fix with AI, JSON/PDF reports, AI consultant), and "Not verified" labelling when Search Console isn't connected.
-- **Migration** `drizzle-saas/0003_g5_search_console.sql`: additive (2 tables, nullable/defaulted columns, indexes). Tested on a populated 0000–0002 database: every existing row unchanged.
-- **Local evidence:** 239 tests (27 new isolation tests + 1 migration test), typecheck, lint, build, worker bundle, Phase 1 smoke, and a 28/28 browser walkthrough. **Google responses were mocked**; nothing here is real-Google evidence.
-- **PageSpeed gap:** root cause confirmed. Neither beta service has `PAGESPEED_API_KEY`; keyless requests hit Google's shared daily quota (429 today). A beta-only key is needed.
-- **Next:** gates SC1–SC5 (Google OAuth client, migration, deploy, real-account hosted tests including a multi-worker run, PageSpeed key). Full report: [g5-search-console-report.md](g5-search-console-report.md).
+- Protected administrator account counts/search/status/usage, quota overrides, suspension/reactivation, invitation visibility and administrative log.
+- Current-password-confirmed tenant JSON export and explicit account deletion, all-session revocation, queue/cascade erasure and stale-worker protection.
+- Retention policy preview/apply framework (destructive execution disabled pending review), draft privacy/terms/data-use pages and account controls.
+- Aggregate web/worker/queue/provider/resource monitoring, fixed-code redacted events, threshold alerts and operator probe.
+- Encrypted complete logical backup/restore with sequence state, FK checks, migration fingerprints and current deletion-ledger reconciliation. Existing staging backup reverified: 23/23 tables, zero mismatches with FKs enforced throughout.
+- Additive `0004_g6_operations`: three new tables; no destructive data changes. Not applied to staging.
+
+Reports: [readiness assessment](g6-readiness-report.md), [local verification](g6-local-verification.md), [security review](g6-security-review.md), [privacy/retention](g6-privacy-retention.md), [backup/monitoring/incident/rollback runbook](g6-operations-runbook.md), [private beta checklist](beta-checklist.md).
+
+External beta remains blocked on approved deployment/hosted tests, Phase 1 **production** SQLite recovery verification, approved privacy/contact/retention, recurring external backups/deletion ledger and operator alert delivery, and residual dependency-risk review. A staging PostgreSQL restore does not satisfy Phase 1 production recovery.
+
+## G5: accepted implementation; live Google deferred
+
+G5 was deployed to the isolated beta as `04d8ca0`, with additive migration 0003 applied, 239 local tests, 71/71 hosted regression checks and successful multi-worker claims/recovery/fencing evidence. G5 is accepted as implementation-complete. Live Google OAuth/Search Console and successful PageSpeed measurements are still unverified; those credentials/tests are separate and do not block G6 development. [Preserved G5 report](g5-search-console-report.md), [specific deferred Google/PageSpeed tests](g6-google-verification.md).
+
+The beta may keep Google features disabled/unavailable while completing the other launch gates. No fabricated data or live-verification claim. All historical stage snapshots below describe their then-current state; the G5/G6 reports above are the current status.
 
 ## Stage 4A: Railway staging preparation (in progress)
 

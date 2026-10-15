@@ -1,0 +1,50 @@
+{
+  "backup": {
+    "sha256": "8d0d70a0951c89fbea910c3215538189bdc89df1e6259646080ec7e4796ea707",
+    "integrity": "ok",
+    "foreignKeyViolations": 0,
+    "migrations": 3,
+    "tables": {
+      "__drizzle_migrations": 3,
+      "audits": 4,
+      "checks": 220,
+      "google_accounts": 0,
+      "issues": 354,
+      "pages": 94,
+      "performance_results": 24,
+      "rate_limits": 6,
+      "search_console_connections": 0,
+      "search_snapshots": 1,
+      "sites": 4
+    },
+    "googleTokens": {
+      "total": 0,
+      "decryptable": 0
+    }
+  },
+  "passed": true,
+  "restored": {
+    "sha256": "8d0d70a0951c89fbea910c3215538189bdc89df1e6259646080ec7e4796ea707",
+    "integrity": "ok",
+    "foreignKeyViolations": 0,
+    "migrations": 3,
+    "tables": {
+      "__drizzle_migrations": 3,
+      "audits": 4,
+      "checks": 220,
+      "google_accounts": 0,
+      "issues": 354,
+      "pages": 94,
+      "performance_results": 24,
+      "rate_limits": 6,
+      "search_console_connections": 0,
+      "search_snapshots": 1,
+      "sites": 4
+    },
+    "googleTokens": {
+      "total": 0,
+      "decryptable": 0
+    }
+  },
+  "countsMatch": true
+}

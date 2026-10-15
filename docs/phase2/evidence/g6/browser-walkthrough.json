@@ -1,0 +1,69 @@
+{
+  "environment": "isolated local development copy; synthetic accounts; no live Google",
+  "followupChecks": [
+    {
+      "name": "Public draft privacy",
+      "passed": true
+    },
+    {
+      "name": "Public draft terms",
+      "passed": true
+    },
+    {
+      "name": "Public draft data-use",
+      "passed": true
+    },
+    {
+      "name": "Administrator account counts",
+      "passed": true
+    },
+    {
+      "name": "Administrator saves quota override",
+      "passed": true
+    },
+    {
+      "name": "Administrator removes quota overrides",
+      "passed": true
+    },
+    {
+      "name": "Operational health/queue/failure/usage dashboard",
+      "passed": true
+    },
+    {
+      "name": "Account privacy controls on mobile",
+      "passed": true
+    },
+    {
+      "name": "Mobile has no horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "Browser account JSON download is owned and secret-free",
+      "passed": true
+    },
+    {
+      "name": "Customer admin URL shows no privileged content",
+      "passed": true,
+      "detail": "HTTP 200; streamed fallback"
+    },
+    {
+      "name": "Unconfigured Google page has no fabricated metrics",
+      "passed": true
+    },
+    {
+      "name": "No unhandled page errors",
+      "passed": true
+    }
+  ],
+  "initialDeletionChecks": [
+    {
+      "name": "Disposable browser account deletion completes",
+      "passed": true
+    },
+    {
+      "name": "Deletion confirmation is visible",
+      "passed": true
+    }
+  ],
+  "note": "Initial walkthrough found a locale-dependent admin-date hydration mismatch. Fixed with stable date formatting; follow-up 13/13 checks and no page errors. The disposable account had already been deleted successfully in the initial pass."
+}

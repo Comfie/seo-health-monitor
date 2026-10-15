@@ -32,3 +32,29 @@ Unchecked gates are incomplete. No external invitations or production deployment
 - [ ] Keep unrestricted public registration unavailable. Prepare it only as a separate reviewed change and approval.
 
 There are no payment, subscription, plan, checkout or billing gates in this phase.
+
+## G6 current gate record (15 October 2026)
+
+This dated record supersedes stale pending statuses in the historical checklist above. No external invitations or automatic deployment are authorised.
+
+- [x] G5 implementation accepted; 239 local baseline tests and 71/71 hosted regression evidence preserved; live Google explicitly deferred.
+- [x] Restore/read back A/B quota baseline and one worker replica; preserve customer data, usage, audit history and G5 image.
+- [x] Administrator account search/counts/status/usage, bounded override changes, suspension/reactivation and administrative logs implemented with server checks.
+- [x] Password-confirmed tenant-only JSON account export, without auth/Google/server credentials or persistent public files.
+- [x] Explicit password-confirmed deletion with all-session revocation, tenant/queue erasure, minimal receipt and stale-worker protection; disposable synthetic test coverage.
+- [x] Preview-first retention framework, proposed periods, guarded apply and active-job preservation; no staging retention execution.
+- [x] Draft public privacy/terms/crawling/Google/disconnect/export/deletion explanations linked from account/auth views.
+- [x] Aggregate operational dashboard, fixed-code events, queue/lease/failure/budget alerts and scheduler-compatible operator probe.
+- [x] Existing staging PostgreSQL backup independently restored with FKs enforced, all 23 tables matching; new encrypted sequence-aware backup/restore and deletion-ledger reconciliation tested locally.
+- [x] Focused security/POPIA review and remaining-risk reports prepared; no new G6 dependency.
+- [ ] Approve G6 source/archive, additive 0004, fresh staging backup, rollback plan and beta-only web/worker deployment.
+- [ ] Run hosted G4/G5/G6 A/B/admin isolation/export tests and deletion/recovery using disposable accounts after deployment. Current G6 evidence is local only.
+- [ ] Separately authorise and verify **Phase 1 production SQLite backup and isolated restore** with original encryption secret; staging PostgreSQL verification is not this gate.
+- [ ] Approve privacy notices/retention/contact/business identity, POPIA request/incident process and processor/cross-border safeguards.
+- [ ] Install and verify recurring encrypted external backup, independent current deletion ledger, restricted key access, expiry, failure alerting and timed environment restore.
+- [ ] Wire/verify operator alert delivery, periodic health probes, platform CPU/memory/connection/cost alerts and escalation/deputy responsibilities.
+- [ ] Accept documented dependency reachability risk or implement tested fixes; verify final runtime images.
+- [ ] Optional Google enablement only: complete the explicit [live verification matrix](g6-google-verification.md). Keep disabled/unavailable otherwise; never advertise unverified PageSpeed as working.
+- [ ] Obtain separate explicit approval before any external beta invitation. Registration remains invite-only/closed.
+
+Readiness: [g6-readiness-report.md](g6-readiness-report.md). Local evidence: [g6-local-verification.md](g6-local-verification.md). Operational procedures: [g6-operations-runbook.md](g6-operations-runbook.md).

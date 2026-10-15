@@ -1,3 +1,6 @@
+import { randomUUID } from "node:crypto";
+import { recordHeartbeat, logOperationalEvent } from "@/lib/saas/telemetry";
+const webId = `web-${randomUUID()}`;
 import { connection } from "next/server";
 import { sql } from "drizzle-orm";
 import { betaJson, getBeta, notFound } from "@/lib/saas/server";
@@ -13,8 +16,10 @@ export async function GET() {
   if (beta.state !== "ready") return betaJson(503, { ok: false });
   try {
     await beta.runtime.db.execute(sql`select 1`);
+    await recordHeartbeat(beta.runtime.db, webId, "web").catch(() => {});
     return betaJson(200, { ok: true });
   } catch {
+    logOperationalEvent("database.failure");
     return betaJson(503, { ok: false });
   }
 }

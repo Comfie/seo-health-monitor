@@ -4,7 +4,7 @@ import { createHash } from "node:crypto";
 import Database from "better-sqlite3";
 import { count, eq, getTableColumns, getTableName, sql } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
-import { decrypt } from "@/lib/security/crypto";
+import { decrypt, encrypt } from "@/lib/security/crypto";
 import type { SaasDb } from "./db";
 import * as schema from "./schema";
 import { imports } from "./operations-schema";
@@ -25,7 +25,9 @@ const tables = [schema.sites, schema.audits, schema.pages, schema.checks, schema
  * read-only, ciphertext is copied byte-for-byte, IDs are retained, and identity
  * sequences are advanced after validation. Never runs on application startup.
  */
-export async function importSqliteBackup(db: SaasDb, backupPath: string, tenantId: string, administratorId: string) {
+export async function importSqliteBackup(db: SaasDb, backupPath: string, tenantId: string, administratorId: string, options: { googleTokenSecret?: string; legacySecret?: string } = {}) {
+  if (process.env.PHASE2_UNIFIED === 'true' && !options.googleTokenSecret) throw new Error('Unified import requires tenant-bound Google token encryption.');
+  if (options.googleTokenSecret && (options.googleTokenSecret.length < 32 || options.googleTokenSecret === (options.legacySecret ?? process.env.APP_SECRET))) throw new Error('Use an independent tenant token encryption secret.');
   if (fs.existsSync(`${backupPath}-wal`) && fs.statSync(`${backupPath}-wal`).size > 0) throw new Error("Use a standalone SQLite backup without pending WAL data.");
   const checksum = () => createHash("sha256").update(fs.readFileSync(backupPath)).digest("hex");
   const sourceSha256 = checksum();
@@ -41,13 +43,14 @@ export async function importSqliteBackup(db: SaasDb, backupPath: string, tenantI
     const googleRows = rowsByTable.get(schema.googleAccounts)!;
     if (rowsByTable.get(schema.searchConsoleConnections)!.length && googleRows.length !== 1) throw new Error("Legacy Google connection mapping is ambiguous; resolve explicitly before importing.");
     for (const row of googleRows) {
-      if (typeof row.encrypted_refresh_token !== "string" || !decrypt(row.encrypted_refresh_token, "google-refresh-token")) throw new Error("Legacy Google token cannot be decrypted; verify the original APP_SECRET.");
+      if (typeof row.encrypted_refresh_token !== "string" || !decrypt(row.encrypted_refresh_token, "google-refresh-token", options.legacySecret)) throw new Error("Legacy Google token cannot be decrypted; verify the original APP_SECRET.");
     }
     const result = await db.transaction(async (tx) => {
       // Lock the destination owner while importing. There is no overwrite/upsert path.
       const [owner] = await tx.select().from(schema.tenants).where(eq(schema.tenants.id, tenantId)).for("update");
       const [admin] = await tx.select().from(schema.administrators).where(eq(schema.administrators.userId, administratorId));
-      if (!owner || owner.personalUserId !== administratorId || !admin) throw new Error("Import requires the initial administrator's personal account.");
+      const [identity] = await tx.select().from(schema.user).where(eq(schema.user.id, administratorId));
+      if (!owner || owner.personalUserId !== administratorId || !admin || !identity?.emailVerified) throw new Error("Import requires the verified initial administrator's personal account.");
       if ((await tx.select().from(imports)).length) throw new Error("A SQLite import already exists.");
       for (const table of tables) {
         const [existing] = await tx.select({ n: count() }).from(table);
@@ -62,10 +65,16 @@ export async function importSqliteBackup(db: SaasDb, backupPath: string, tenantI
             let value = sourceRow[column.name];
             if (column.name === "tenant_id") value = tenantId;
             else if (name === "google_accounts" && column.name === "user_id") value = administratorId;
+            else if (name === "google_accounts" && column.name === "encrypted_refresh_token" && options.googleTokenSecret) {
+              const plaintext = decrypt(String(value), 'google-refresh-token', options.legacySecret);
+              if (!plaintext) throw new Error('Legacy Google token cannot be decrypted.');
+              value = encrypt(plaintext, `beta-google-refresh-token:${tenantId}`, options.googleTokenSecret);
+              if (decrypt(String(value), `beta-google-refresh-token:${tenantId}`, options.googleTokenSecret) !== plaintext) throw new Error('Tenant token encryption verification failed.');
+            }
             else if (name === "search_console_connections" && column.name === "google_account_id") value = googleRows[0]?.id;
             else if (column.name === "display_name") value = sourceRow.host;
-            // Columns Phase 1 never had (G5). The imported Phase 1 ciphertext is not readable with the
-            // beta's tenant-bound token key, so the first use marks it revoked and the owner reconnects.
+            // Columns Phase 1 never had (G5). Unified imports re-encrypt credentials above;
+            // the legacy rehearsal mode retains ciphertext for backwards compatibility only.
             else if (value === undefined && `${name}.${column.name}` in PHASE2_ONLY_DEFAULTS) value = PHASE2_ONLY_DEFAULTS[`${name}.${column.name}`];
             if (value === undefined) throw new Error(`Source column missing: ${name}.${column.name}`);
             // SQLite stores timestamps as Unix milliseconds and JSON as text.

@@ -6,6 +6,7 @@ import { authMode, createSessionToken, isHttpsRequest, SESSION_COOKIE, SESSION_T
 const body = z.object({ password: z.string().min(1).max(500) });
 
 export async function POST(request: Request) {
+  if (process.env.PHASE2_UNIFIED === "true") return NextResponse.json({ error: "Use account sign-in." }, { status: 410 });
   if (authMode() !== "password") return NextResponse.json({ error: "Password sign-in is not enabled." }, { status: 400 });
   // Brute-force protection: per client and across all clients.
   const limit = checkLimits(clientKey(request.headers), "login", { max: 10, windowMs: 15 * 60_000 }, { max: 50, windowMs: 15 * 60_000 });

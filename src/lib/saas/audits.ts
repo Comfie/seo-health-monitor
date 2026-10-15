@@ -1,4 +1,5 @@
 import "server-only";
+import { recordEvent } from "./telemetry";
 import { randomUUID } from "node:crypto";
 import { and, asc, count, desc, eq, inArray } from "drizzle-orm";
 import type { FullAudit } from "@/lib/audit/repository";
@@ -189,6 +190,7 @@ export function customerAudits(db: SaasDb, context: TenantContext, settings: Lim
       } catch (error) {
         // No report was produced: a provider outage must not use up the account's allowance.
         // Repeated failures are still bounded by the route's per-account request throttle.
+        await recordEvent(db, "ai.failure", tenantId);
         await releaseUsage(db, tenantId, reservation);
         throw error;
       }

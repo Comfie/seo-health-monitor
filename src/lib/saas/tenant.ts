@@ -4,6 +4,7 @@ import { and, eq, gt, isNotNull, isNull, or } from "drizzle-orm";
 import type { SaasAuth } from "./auth";
 import type { SaasDb } from "./db";
 import { activity } from "./operations-schema";
+import { user } from "./auth-schema";
 import { invitations, memberships, tenants } from "./tenancy-schema";
 
 const verifiedContext = Symbol("verified-tenant-context");
@@ -22,6 +23,9 @@ const seal = (userId: string, tenantId: string): TenantContext => Object.freeze(
 export async function provisionPersonalTenant(db: SaasDb, verifiedUser: { id: string; email: string; name: string; emailVerified: boolean }) {
   if (!verifiedUser.emailVerified) throw new AccessDeniedError();
   return db.transaction(async (tx) => {
+    // A library session read before erasure must never provision a deleted identity.
+    const [identity] = await tx.select({ id: user.id }).from(user).where(and(eq(user.id, verifiedUser.id), eq(user.emailVerified, true))).for("share");
+    if (!identity) throw new AccessDeniedError();
     const [existing] = await tx.select({ id: tenants.id, status: tenants.status }).from(tenants)
       .innerJoin(memberships, and(eq(memberships.tenantId, tenants.id), eq(memberships.userId, verifiedUser.id)))
       .where(eq(tenants.personalUserId, verifiedUser.id)).limit(1);

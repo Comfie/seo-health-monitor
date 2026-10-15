@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { throttle } from "@/lib/saas/audit-http";
 import { searchConsoleFor } from "@/lib/saas/gsc-http";
-import { GSC_BROWSER_COOKIE, GSC_COOKIE_PATH, SEARCH_PAGE, SearchConsoleError } from "@/lib/saas/search-console";
+import { GSC_BROWSER_COOKIE, googleCookiePath, SEARCH_PAGE, SearchConsoleError } from "@/lib/saas/search-console";
 import { withCustomer } from "@/lib/saas/server";
 
 /**
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       const response = NextResponse.redirect(url, 303);
       response.headers.set("cache-control", "no-store");
       response.cookies.set(GSC_BROWSER_COOKIE, browserNonce, {
-        httpOnly: true, secure: runtime.config.origin.startsWith("https:"), sameSite: "lax", path: GSC_COOKIE_PATH, maxAge: 600,
+        httpOnly: true, secure: runtime.config.origin.startsWith("https:"), sameSite: "lax", path: googleCookiePath(runtime.config.google), maxAge: 600,
       });
       return response;
     } catch (error) {

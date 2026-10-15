@@ -12,7 +12,8 @@ import { afterAll, describe, expect, it } from "vitest";
 import { saasSchema } from "@/lib/saas/db";
 import { bootstrapAdministrator } from "@/lib/saas/bootstrap";
 import { importSqliteBackup } from "@/lib/saas/import-sqlite";
-import { encrypt } from "@/lib/security/crypto";
+import { decrypt, encrypt } from "@/lib/security/crypto";
+import {captureUnifiedOwner,seedUnifiedOwner} from '@/lib/saas/unified-owner';
 
 const directory = fs.mkdtempSync(path.join(os.tmpdir(), "seo-saas-import-"));
 afterAll(() => fs.rmSync(directory, { recursive: true, force: true }));
@@ -43,6 +44,35 @@ async function fixture(invalidJson = false) {
 }
 
 describe("non-destructive SQLite to PostgreSQL rehearsal", () => {
+  it('copies only the verified administrator identity and password hash into an empty destination',async()=>{
+    const f=await fixture();const target=new PGlite();const targetDb=drizzle(target,{schema:saasSchema});
+    try{
+      await migrate(targetDb,{migrationsFolder:'drizzle-saas'});
+      await f.db.insert(saasSchema.account).values({id:'owner-credential',accountId:f.userId,providerId:'credential',userId:f.userId,password:'private-existing-hash'});
+      await f.db.insert(saasSchema.user).values({id:'disposable-test-user',email:'disposable@example.com',emailVerified:true,name:'Do not copy'});
+      const owner=await captureUnifiedOwner(f.db,f.email);
+      await expect(seedUnifiedOwner(targetDb,owner,'wrong@example.com')).rejects.toThrow('confirmation');
+      await seedUnifiedOwner(targetDb,owner,f.email);
+      expect((await targetDb.select().from(saasSchema.user)).map(u=>u.id)).toEqual([f.userId]);
+      expect((await targetDb.select().from(saasSchema.account))[0].password).toBe('private-existing-hash');
+      expect(await targetDb.select().from(saasSchema.session)).toHaveLength(0);
+      expect(await targetDb.select().from(saasSchema.invitations)).toHaveLength(0);
+      await expect(seedUnifiedOwner(targetDb,owner,f.email)).rejects.toThrow('empty');
+      await expect(captureUnifiedOwner(f.db,'disposable@example.com')).rejects.toThrow();
+    }finally{await f.client.close();await target.close();}
+  },30_000);
+  it('re-encrypts an existing production grant for the verified owner without making Google requests', async()=>{
+    const f=await fixture();const secret=randomUUID()+randomUUID();
+    try{
+      await importSqliteBackup(f.db,f.file,f.tenantId,f.userId,{googleTokenSecret:secret});
+      const [g]=await f.db.select().from(saasSchema.googleAccounts);
+      expect(g.encryptedRefreshToken).not.toBe(f.token);
+      expect(decrypt(g.encryptedRefreshToken,`beta-google-refresh-token:${f.tenantId}`,secret)).toBe(decrypt(f.token,'google-refresh-token'));
+      expect(decrypt(g.encryptedRefreshToken,'beta-google-refresh-token:foreign-tenant',secret)).toBeNull();
+      expect(g.status).toBe('active');expect(g.googleSubject).toBeNull();
+      const [c]=await f.db.select().from(saasSchema.searchConsoleConnections);expect(c.googleAccountId).toBe(g.id);
+    }finally{await f.client.close();}
+  },30_000);
   it("preserves records, relationships, JSON, scores, IDs, timestamps and ciphertext", async () => {
     const f = await fixture();
     try {
@@ -127,7 +157,10 @@ describe("G5 migration 0003 on a populated G4 database", () => {
       return out;
     };
     const rowsBefore = await snapshot();
-    await migrate(db, { migrationsFolder: "drizzle-saas" });
+    const g5 = { ...journal, entries: journal.entries.filter((e: { tag: string }) => e.tag < "0004") };
+    fs.copyFileSync("drizzle-saas/0003_g5_search_console.sql", path.join(g4, "0003_g5_search_console.sql"));
+    fs.writeFileSync(path.join(g4, "meta/_journal.json"), JSON.stringify(g5));
+    await migrate(db, { migrationsFolder: g4 });
     expect(await snapshot()).toEqual(rowsBefore);
     const [google] = (await client.query<{ status: string; google_subject: string | null }>("select status, google_subject from google_accounts")).rows;
     expect(google).toEqual({ status: "active", google_subject: null });

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { readCookie, searchConsoleFor } from "@/lib/saas/gsc-http";
-import { GSC_BROWSER_COOKIE, GSC_COOKIE_PATH, SEARCH_PAGE, SearchConsoleError, type CallbackOutcome } from "@/lib/saas/search-console";
+import { GSC_BROWSER_COOKIE, googleCookiePath, SEARCH_PAGE, SearchConsoleError, type CallbackOutcome } from "@/lib/saas/search-console";
 import { atRequestTime, betaJson, getBeta, notFound } from "@/lib/saas/server";
 import { AccessDeniedError, requireTenant } from "@/lib/saas/tenant";
 
@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     const response = NextResponse.redirect(new URL(location, runtime.config.origin), 303);
     response.headers.set("cache-control", "no-store");
     response.headers.set("referrer-policy", "no-referrer");
-    response.cookies.set(GSC_BROWSER_COOKIE, "", { httpOnly: true, secure: runtime.config.origin.startsWith("https:"), sameSite: "lax", path: GSC_COOKIE_PATH, maxAge: 0 });
+    response.cookies.set(GSC_BROWSER_COOKIE, "", { httpOnly: true, secure: runtime.config.origin.startsWith("https:"), sameSite: "lax", path: googleCookiePath(runtime.config.google), maxAge: 0 });
     return response;
   };
 

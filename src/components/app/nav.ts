@@ -69,13 +69,14 @@ const BETA_NAV: { label: string; items: NavItem[] }[] = [
       { href: "/beta", label: "Dashboard", icon: LayoutDashboard },
       { href: "/beta/websites", label: "Websites", icon: Globe },
       { href: "/beta/audits", label: "Audit history", icon: History },
+      { href: "/beta/progress", label: "SEO progress", icon: TrendingUp },
       { href: "/beta/search-console", label: "Search performance", icon: TrendingUp },
     ],
   },
   { label: "Account", items: [{ href: "/beta/account", label: "Account settings", icon: UserCog }] },
 ];
 
-const BETA_ADMIN_NAV = [...BETA_NAV, { label: "Administration", items: [{ href: "/beta/admin", label: "Beta invitations", icon: MailPlus }] }];
+const BETA_ADMIN_NAV = [...BETA_NAV, { label: "Administration", items: [{ href: "/beta/admin", label: "Accounts and invitations", icon: MailPlus }, { href: "/beta/admin/operations", label: "Operations", icon: Activity }] }];
 
 export type NavVariant = "legacy" | "beta" | "beta-admin";
 export const NAV_VARIANTS: Record<NavVariant, { home: string; groups: { label: string; items: NavItem[] }[] }> = {

@@ -1,4 +1,5 @@
 import "server-only";
+import { logOperationalEvent } from "./telemetry";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
@@ -26,7 +27,7 @@ export function createSaasDb(connectionString: string) {
   // on staging with a SIGSTOPped worker); the in-flight operation still fails and is handled by
   // its caller, and the pool discards the connection. Driver errors can contain credentials or
   // SQL parameters, so only the code is logged.
-  const report = (error: Error & { code?: string }) => console.error(`[beta-db] connection closed by the server (${error.code ?? "unknown"})`);
+  const report = () => logOperationalEvent("database.failure");
   pool.on("error", report);
   pool.on("connect", (client) => client.on("error", report));
   return drizzle(pool, { schema: saasSchema });

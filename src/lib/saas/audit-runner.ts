@@ -1,4 +1,5 @@
 import "server-only";
+import { recordEvent } from "./telemetry";
 import { randomUUID } from "node:crypto";
 import { and, asc, eq } from "drizzle-orm";
 import { config } from "@/lib/config";
@@ -62,11 +63,15 @@ function classify(error: unknown): { message: string; retryable: boolean } {
 /** PageSpeed tests with per-test budget reservation (tenant monthly + global daily). */
 async function measure(deps: RunnerDeps, lease: Lease, urls: string[], signal: AbortSignal, onProgress?: (done: number, total: number, label: string) => void) {
   const apiKey = deps.pagespeedApiKey ?? config.pagespeedApiKey;
-  return runPerformanceJobs(urls, {
+  const results = await runPerformanceJobs(urls, {
     apiKey,
     timeoutMs: config.pagespeed.timeoutMs,
     concurrency: apiKey ? 2 : 1,
-    run: deps.pagespeed,
+    run: async (...args) => {
+      const result = await (deps.pagespeed ?? runPageSpeed)(...args);
+      if (result.status === "unavailable") await recordEvent(deps.db, "pagespeed.failure", lease.tenantId);
+      return result;
+    },
     signal,
     onProgress,
     beforeTest: async () => {
@@ -79,6 +84,7 @@ async function measure(deps: RunnerDeps, lease: Lease, urls: string[], signal: A
       }
     },
   });
+  return results;
 }
 
 async function runAudit(deps: RunnerDeps, lease: Lease, signal: AbortSignal, abort: (reason: Error) => void) {

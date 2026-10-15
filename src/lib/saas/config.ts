@@ -9,7 +9,7 @@ export type EmailConfig =
  * Console is unavailable; the rest of the beta keeps working.
  */
 export type GoogleConfig =
-  | { state: "ready"; clientId: string; clientSecret: string; tokenSecret: string; redirectUri: string; maxInspections: number }
+  | { state: "ready"; clientId: string; clientSecret: string; tokenSecret: string; redirectUri: string; maxInspections: number; sharedLegacyClient?: boolean }
   | { state: "unavailable"; problem: string; redirectUri: string };
 
 export type BetaConfig = {
@@ -42,7 +42,7 @@ export function readBetaConfig(env: NodeJS.ProcessEnv = process.env): BetaConfig
   const production = env.NODE_ENV === "production";
   const legacy = authMode(env);
   if (legacy === "disabled") return fail("AUTH_DISABLED would expose global Phase 1 data to beta customers.");
-  if (production && legacy !== "password") return fail("The legacy owner area must use AUTH_PASSWORD before the beta can run.");
+  if (production && legacy !== "password" && env.PHASE2_UNIFIED !== "true") return fail("The legacy owner area must use AUTH_PASSWORD before the beta can run.");
 
   const databaseUrl = value(env, "PHASE2_DATABASE_URL");
   if (!databaseUrl) return fail("PHASE2_DATABASE_URL is required.");
@@ -105,16 +105,18 @@ export function readBetaConfig(env: NodeJS.ProcessEnv = process.env): BetaConfig
  * let a beta revocation end Phase 1's grant for the same Google user, so it is refused.
  */
 export function readGoogleConfig(env: NodeJS.ProcessEnv, origin: string, authSecret: string): GoogleConfig {
-  const redirectUri = `${origin}/api/beta/google/callback`;
-  const clientId = value(env, "PHASE2_GOOGLE_CLIENT_ID");
-  const clientSecret = value(env, "PHASE2_GOOGLE_CLIENT_SECRET");
+  const sharedLegacyClient = value(env, "PHASE2_GOOGLE_REUSE_LEGACY_CLIENT") === "true";
+  const redirectUri = `${origin}${env.PHASE2_UNIFIED === "true" ? "/api/integrations/google/callback" : "/api/beta/google/callback"}`;
+  const clientId = value(env, "PHASE2_GOOGLE_CLIENT_ID") ?? (sharedLegacyClient ? value(env, "GOOGLE_CLIENT_ID") : undefined);
+  const clientSecret = value(env, "PHASE2_GOOGLE_CLIENT_SECRET") ?? (sharedLegacyClient ? value(env, "GOOGLE_CLIENT_SECRET") : undefined);
   const tokenSecret = value(env, "PHASE2_GOOGLE_TOKEN_SECRET");
   const unavailable = (problem: string) => ({ state: "unavailable", problem, redirectUri }) as const;
   if (!clientId && !clientSecret && !tokenSecret) return unavailable("Search Console is not configured for the beta.");
   if (!clientId || !clientSecret || !tokenSecret) return unavailable("PHASE2_GOOGLE_CLIENT_ID, PHASE2_GOOGLE_CLIENT_SECRET and PHASE2_GOOGLE_TOKEN_SECRET are all required.");
-  if (clientId === value(env, "GOOGLE_CLIENT_ID")) return unavailable("PHASE2_GOOGLE_CLIENT_ID must be a separate OAuth client from Phase 1's GOOGLE_CLIENT_ID.");
+  if (clientId === value(env, "GOOGLE_CLIENT_ID") && !sharedLegacyClient) return unavailable("PHASE2_GOOGLE_CLIENT_ID must be a separate OAuth client from Phase 1's GOOGLE_CLIENT_ID, or intentional reuse must be enabled.");
+  if (sharedLegacyClient && (clientId !== value(env, "GOOGLE_CLIENT_ID") || clientSecret !== value(env, "GOOGLE_CLIENT_SECRET"))) return unavailable("Intentional reuse requires the exact existing Google OAuth client configuration.");
   if (tokenSecret.length < 32) return unavailable("PHASE2_GOOGLE_TOKEN_SECRET must be 32+ random characters.");
   if ([value(env, "APP_SECRET"), authSecret].includes(tokenSecret)) return unavailable("PHASE2_GOOGLE_TOKEN_SECRET must differ from APP_SECRET and PHASE2_AUTH_SECRET.");
   const inspections = Number.parseInt(value(env, "PHASE2_GSC_MAX_INSPECTIONS") ?? "10", 10);
-  return { state: "ready", clientId, clientSecret, tokenSecret, redirectUri, maxInspections: Number.isFinite(inspections) ? Math.min(50, Math.max(0, inspections)) : 10 };
+  return { state: "ready", clientId, clientSecret, tokenSecret, redirectUri, maxInspections: Number.isFinite(inspections) ? Math.min(50, Math.max(0, inspections)) : 10, sharedLegacyClient };
 }

@@ -1,0 +1,10 @@
+{
+  "checkedAt": "2026-10-15T08:01:01.560Z",
+  "source": "existing pre-G5 logical backup",
+  "erasedAccounts": 0,
+  "tablesVerified": 23,
+  "foreignKeys": "enforced throughout restore",
+  "sequences": 0,
+  "mismatches": 0,
+  "sequenceCaveat": "Legacy backup did not capture sequence state; new backups do."
+}

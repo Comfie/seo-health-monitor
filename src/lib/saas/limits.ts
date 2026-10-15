@@ -2,7 +2,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { and, count, eq, gte, inArray, sql, sum } from "drizzle-orm";
 import type { SaasDb } from "./db";
-import { jobs, usageRecords } from "./operations-schema";
+import { activity, jobs, usageRecords } from "./operations-schema";
 import { tenants } from "./tenancy-schema";
 
 /**
@@ -107,7 +107,10 @@ export async function usedUnits(tx: Tx | SaasDb, where: { tenantId?: string; kin
     eq(usageRecords.kind, where.kind),
     gte(usageRecords.createdAt, where.since),
   ));
-  return Number(row?.n ?? 0);
+  if (where.tenantId) return Number(row?.n ?? 0);
+  const [archived] = await tx.select({ n: sql<string>`coalesce(sum((${activity.metadata}->>'units')::bigint),0)` }).from(activity)
+    .where(and(eq(activity.action, 'usage.anonymised'), sql`${activity.metadata}->>'kind' = ${where.kind}`, gte(activity.createdAt, where.since)));
+  return Number(row?.n ?? 0) + Number(archived?.n ?? 0);
 }
 
 export class BudgetExhaustedError extends Error {}

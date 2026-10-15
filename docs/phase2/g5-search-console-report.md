@@ -1,6 +1,6 @@
 # G5: multi-tenant Google Search Console — verification report
 
-Prepared 15 October 2026 (Africa/Johannesburg) on `phase2-multiuser`, based on the tested G4 release `d31e130` (evidence `adcf96f`). **Status: implemented and verified locally; hosted verification with real Google accounts has not started and needs approval** (gates SC1–SC5 below). Nothing was committed, pushed or deployed. Phase 1 production, its Google integration and the beta staging services and data were not changed. The only staging access in this pass was a read-only listing of variable *names*.
+Prepared 15 October 2026 (Africa/Johannesburg) on `phase2-multiuser`, based on the tested G4 release `d31e130` (evidence `adcf96f`). **Status: approved and deployed to the beta only as `04d8ca0`; migration applied; hosted regression and multi-worker tests passed; live-Google tests and the PageSpeed key are waiting on the owner's Google Cloud setup** (see Hosted progress). Nothing was pushed. Phase 1 production and its Google integration were not changed.
 
 > Naming: this milestone is "G5 (Search Console)". The runbook's earlier gate "G5 production SQLite backup" in [staging-setup.md](staging-setup.md#0-approval-gates) is a different, still-unapproved gate and is unchanged.
 
@@ -98,7 +98,26 @@ The G4 runs recorded only "unavailable" PageSpeed results. Root cause: neither b
 
 Fix (needs approval, SC5): create a **beta-only** API key restricted to the PageSpeed Insights API (and to the beta services if possible), and set `PAGESPEED_API_KEY` on `seo-beta-worker`, which runs audits and re-tests, and `seo-beta-web`. Keep `PHASE2_GLOBAL_PAGESPEED_PER_DAY` as the cost cap. Do not reuse Phase 1's key.
 
-## Hosted verification plan (approval required; nothing below has been done)
+## Hosted progress (approved 15 October 2026)
+
+All five gates were approved for the isolated beta only. Completed so far, in order:
+
+| Step | Evidence |
+| --- | --- |
+| Pre-migration check | Read-only `db:saas:staging -- check`: PostgreSQL 18.6, migrations 3, 22 tables, 3 users, 3 tenants, 2 websites, 10 audits, 10 jobs, **0 Google accounts** (so the new unique index is safe). |
+| Staging backup | Railway refused a native volume backup ("only available for Pro workspaces"). Instead: a **logical export** of all 23 tables (JSON lines, read-only repeatable-read transaction) plus per-table fingerprints (row count plus MD5 of canonical rows, `TimeZone=UTC`, `COLLATE "C"`), stored in `~/secure/backups/beta-pg-before-g5-20261015T065232Z/` (mode 0600, contains customer data; never in Git). **Restore verified**: replayed into a disposable PostgreSQL (PGlite) on the 0000–0002 schema, 23/23 tables match, 0 mismatches. A first comparison showed 5 false mismatches caused by session timezone and collation-dependent ordering; both are now pinned. Nothing was installed locally (owner instruction). |
+| Migration `0003` | Applied with the guarded staging command. After: 4 migrations, 24 tables. **All 22 pre-existing tables are byte-identical** to the pre-migration fingerprints; only `google_oauth_states` and `search_console_jobs` were added. Beta and Phase 1 health 200 afterwards. |
+| Secret scan and commit | 50 staged files scanned for 7 credential patterns and 12 known secret values (from `.env.local` and the beta services' and Postgres's Railway variables): **0 real hits**. The single pattern hit is the deliberately fake `postgresql://user:…@db.internal` in an existing test that proves credential-bearing errors are not leaked. Committed as **`04d8ca0fa3728ab175d483f1a37c187fc0dd3ad3`**. |
+| Deploy | Clean `git archive 04d8ca0` uploaded to `seo-beta-web` (deployment `a3460772-32c0-4f60-b9b0-81107e5f4c5e`) and `seo-beta-worker` (`596aa30d-3302-4ba4-a21d-edfd8d4cded1`), both SUCCESS. Phase 1 unchanged: `b921c2dc-3e09-4386-8605-209ece6febb1`, health 200. Rollback: the `d31e130` commands in [the G4 report](hosted-g4-test-report.md#reproduce-or-restore-the-tested-application). Deploys never migrate, and `0003` is additive, so G4 code also runs on the migrated schema. |
+| Hosted G4 regression + G5 boundaries (Google not yet configured) | **71/71** with the real A/B accounts: sign-in with Secure/HttpOnly/SameSite=Lax cookies; website isolation and identical 404s for foreign/malformed IDs; A's exhausted October audit quota refused with 409 before any override; audits through the Railway worker with observed progress (running/70 → 94 → completed/100); concurrency limit; running-audit cancellation; JSON/CSV/Markdown/PDF exports (`private, no-store`) and foreign 404s; Fix with AI; comparison; AI ownership-before-503; the index check and JSON report saying "Not verified"; Search Console endpoints returning not-configured and foreign 404s; cross-origin 403; legacy 401; admin 404; public sign-up 404; sign-out and cookie replay 401. |
+| Staging-only test overrides (to be restored) | A and B: `monthly_audit_limit=15` (October allowance exhausted by G4), `concurrent_audit_limit=2` (controlled parallel load), `monthly_pagespeed_limit=0` (keeps the shared 40/day PageSpeed budget for the real-measurement test). Originals (all NULL) are recorded in a ledger; usage records were not touched. |
+| Multiple Railway replicas | `seo-beta-worker` scaled to **2 replicas** (deployment `634b38b7-6647-4998-bffc-760c783b29d0`, same source); two worker IDs logged. **T1 6/6**: 4 controlled audits; both replicas claimed work; every audit claimed exactly once (attempts = fence = 1); peak running 2 = global limit; no duplicate rows. |
+| Hard termination | **T2 5/5** (the 6th check was corrected). A third worker process built from the same commit, running the real queue code against beta PostgreSQL, claimed audit 21 and was `SIGKILL`ed while holding the lease. Railway replica `worker-fef33482…` recovered the expired lease **186 s** later and completed it (attempts 2, fence 2); results stored once. To make that process win the claim deterministically, the test job's `available_at` was delayed 20 s and the local process ran with its clock 30 s ahead (fencing makes skew safe). Scaling the Railway worker to 0 for this purpose was refused by the session's permission guard and was not pursued. The first T2 attempt was invalid: the Railway replicas won all three claim races, so no kill happened. Harness correction: requeueing is recorded in `audits.stage`, not the log; the log shows the killed (07:15:10) and recovered (07:17:41) crawl starts. |
+| Stale lease | **T3 5/5**: the local worker was `SIGSTOP`ped mid-job; a Railway replica recovered and completed audit 22 (fence 2); after `SIGCONT` the frozen worker's completion was **rejected as `stale`** and the stored results were unchanged. |
+
+Still waiting on the owner's Google Cloud setup: SC1 credentials, SC4 live-Google tests, and SC5 PageSpeed key and measurements. The tooling for both is prepared.
+
+## Hosted verification plan (approved 15 October 2026)
 
 | Gate | Action | Phase 1 impact |
 | --- | --- | --- |
@@ -118,3 +137,13 @@ Decisions needed from you: approval for each gate; which Google accounts A and B
 - When the same Google user is connected in two tenants, a disconnect deletes the local credential but leaves Google's grant in place (by design, to protect the other tenant). The customer is told they can also remove access in their Google account.
 - Old snapshots are kept after unlinking or disconnecting, as the account's own history. Screens and reports only use data for the currently linked property, and account data deletion is still outside this stage.
 - Isolation still relies on repository filters, composite foreign keys and tests (no PostgreSQL row-level security), as in G4.
+
+## G6 handover — G5 accepted, live Google deferred (15 October 2026)
+
+The owner accepts G5 as **implementation-complete**. Live Google authorisation and successful PageSpeed measurement remain **unverified** and do not block G6 development. The original report, local/mock evidence, hosted regressions and worker experiments above are preserved.
+
+At G6 entry, Railway readback confirmed web deployment `a3460772-32c0-4f60-b9b0-81107e5f4c5e` and worker deployment `634b38b7-6647-4998-bffc-760c783b29d0`, both labelled `G5 Search Console 04d8ca0`. Source: `04d8ca0fa3728ab175d483f1a37c187fc0dd3ad3`. This was a CLI archive deployment, so the deployment label, image digests and prior archive record establish source provenance rather than a Railway repository SHA.
+
+**Restored and read back:** A/B's six quota columns match the original ledger exactly (all `NULL`, including `monthly_pagespeed_limit`), returning PageSpeed to its original inherited configuration. No global provider settings were changed. Usage 32, websites 2, audits 22 and activity 55 were unchanged across restoration. The beta worker is back to **one running replica**, deployment `cb5a947b-7343-4d09-b7ca-f2e83c356b3d`, preserving image `sha256:738423e71e8e23b63e30cd711715b0a42ce11ee13298ab396b76c047ea9d40bf`. Web image remains `sha256:4b9cfa8d05f7b4a3b32b1a72df09d709d31a8a0cdd58184f3290845cbd55c889`. Phase 1 deployment remains `b921c2dc-3e09-4386-8605-209ece6febb1`. Scaling reused the existing G5 image; no G6 code was deployed. See [restoration evidence](evidence/g6/restored-quotas.json).
+
+Deferred real-provider scenarios are consolidated in [g6-google-verification.md](g6-google-verification.md). They include separate Google identities, consent/callback through Railway, property authorisation and isolation, refresh/revocation/disconnection (including shared grants), real analytics and inspection data, and successful mobile/desktop PageSpeed measurements under a restricted beta-only key. Mock success and an anonymous 429 are not successful live integration evidence.

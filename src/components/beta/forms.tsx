@@ -31,6 +31,7 @@ function Field({ id, label, ...props }: { id: string; label: string } & React.Co
 }
 
 const NOTICES: Record<string, { tone: "error" | "info" | "success"; text: string }> = {
+  deleted: { tone: "success", text: "Your account and active data have been deleted. All sessions have been revoked." },
   verified: { tone: "success", text: "Email verified. Sign in to open your dashboard." },
   reset: { tone: "success", text: "Password changed. Sign in with your new password." },
   unverified: { tone: "info", text: "Verify your email before signing in. Signing in sends a new link." },
@@ -47,7 +48,7 @@ export function BetaLoginForm() {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState<{ tone: "error" | "info" | "success"; text: string } | null>(
     // Verification failures redirect with both ?verified=1 and ?error=..., so errors win.
-    NOTICES[params.get("error") ? params.get("error")!.toLowerCase() : params.get("verified") ? "verified" : params.get("reset") ? "reset" : ""] ?? null,
+    NOTICES[params.get("error") ? params.get("error")!.toLowerCase() : params.get("deleted") ? "deleted" : params.get("verified") ? "verified" : params.get("reset") ? "reset" : ""] ?? null,
   );
   const [pending, setPending] = useState(false);
   const target = safeNext(params.get("next"));

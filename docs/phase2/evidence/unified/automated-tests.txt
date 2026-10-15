@@ -1,0 +1,13 @@
+
+> seo-health-monitor@0.1.0 test
+> vitest run
+
+
+ RUN  v5.0.4 /Users/comfort/Projects/personal/seo-health-monitor
+
+
+ Test Files  21 passed (21)
+      Tests  268 passed (268)
+   Start at  11:48:14
+   Duration  22.01s (tests 84%, import 14%, transform 2%)
+

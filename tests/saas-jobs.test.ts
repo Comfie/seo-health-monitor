@@ -56,6 +56,7 @@ let aliceSite: number;
 let bobSite: number;
 
 async function resetQueue() {
+  await db.delete(saasSchema.operationalEvents);
   await db.delete(saasSchema.jobs);
   await db.delete(saasSchema.audits);
   await db.delete(saasSchema.usageRecords);
@@ -319,6 +320,7 @@ describe("quotas and provider budgets", () => {
     for (const p of skipped) expect(p).toMatchObject({ performanceScore: null, lcpMs: null, error: expect.stringMatching(/monthly PageSpeed test allowance/) });
     const usage = await customerAudits(db, alice, settings).usage(now());
     expect(usage.used.pagespeedThisMonth).toBe(3);
+    expect(await db.select().from(saasSchema.operationalEvents).where(eq(saasSchema.operationalEvents.kind, "pagespeed.failure"))).toHaveLength(0);
   });
 
   it("stores timeouts and Google rate limits as unavailable measurements", async () => {
@@ -329,6 +331,7 @@ describe("quotas and provider budgets", () => {
       ++n === 1 ? { url, strategy, status: "unavailable", errorCode: "timeout", error: "PageSpeed Insights did not respond within 120s.", opportunities: [] }
         : { url, strategy, status: "unavailable", errorCode: "quota", error: "PageSpeed Insights quota exceeded (HTTP 429).", opportunities: [] };
     await executeJob(deps({ pagespeed: flaky }), lease, control());
+    expect(await db.select().from(saasSchema.operationalEvents).where(eq(saasSchema.operationalEvents.kind, "pagespeed.failure"))).toHaveLength(n);
     const { performance, checks } = await customerAudits(db, alice, settings).full(audit);
     expect(performance.every((p) => p.status === "unavailable" && p.performanceScore === null)).toBe(true);
     // Google confirmed the quota is gone: remaining tests are skipped, not sent (two run in parallel).
