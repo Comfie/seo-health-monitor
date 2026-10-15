@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { AlertCircle, ArrowUpRight, Sparkles } from "lucide-react";
+import { AlertCircle, ArrowUpRight, ChevronDown, Sparkles } from "lucide-react";
 import Loading from "@/app/(app)/loading";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { buttonVariants } from "@/components/ui/button";
@@ -185,7 +185,19 @@ async function AuditContent({ params }: PageProps<"/beta/audits/[id]">) {
       </Section>
 
       <Section title="AI consultant report" description="Optional narrative report written by an AI model from this audit's measured data only. Each audit can have one report, which uses one of your monthly AI reports.">
-        {audit.aiReport ? <div className="rounded-lg border bg-card p-5"><Markdown>{audit.aiReport}</Markdown></div> : null}
+        {audit.aiReport ? (
+          <details open className="group rounded-lg border bg-card">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 hover:bg-muted/40 [&::-webkit-details-marker]:hidden">
+              <span className="inline-flex items-center gap-2 font-medium"><Sparkles className="size-4 text-primary" aria-hidden />AI consultant report</span>
+              <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                {audit.aiGeneratedAt && <span className="hidden sm:inline">Written {formatDate(audit.aiGeneratedAt)}</span>}
+                <span className="group-open:hidden">Show</span><span className="hidden group-open:inline">Hide</span>
+                <ChevronDown className="size-4 transition-transform group-open:rotate-180" aria-hidden />
+              </span>
+            </summary>
+            <div className="border-t p-5"><Markdown>{audit.aiReport}</Markdown></div>
+          </details>
+        ) : null}
         {audit.aiReport ? null : !isAiConfigured() ? <p className="text-sm text-muted-foreground">The AI consultant is not enabled for the beta yet. Fix with AI instructions above work with any AI coding tool.</p> : aiPaused ? <p className="text-sm text-muted-foreground">AI reports are paused for now. Fix with AI instructions above work with any AI coding tool.</p> : <div className="mt-3"><AiReportButton auditId={audit.id} /></div>}
       </Section>
 
