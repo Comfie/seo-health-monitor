@@ -2,13 +2,14 @@ import { randomUUID } from "node:crypto";
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { saasSchema, type SaasDb } from "@/lib/saas/db";
 import { createInvitation } from "@/lib/saas/invitations";
 import { provisionPersonalTenant, type TenantContext } from "@/lib/saas/tenant";
 import { tenantRepository } from "@/lib/saas/repository";
 import { customerAudits } from "@/lib/saas/audits";
+import { setAiPaused } from "@/lib/saas/administration";
 import { claimJob, completeJob, failJob, heartbeat, recoverExpiredJobs, reportProgress, requestCancel, LeaseLostError, type QueueTiming } from "@/lib/saas/jobs";
 import { executeJob, type RunnerDeps } from "@/lib/saas/audit-runner";
 import { createWorker } from "@/lib/saas/worker";
@@ -396,6 +397,26 @@ describe("quotas and provider budgets", () => {
     const third = await start(alice, aliceSite);
     await executeJob(deps(), (await claimJob(db, "w1", settings, timing, now()))!, control());
     await expect(service.consultantReport(third, async () => ({ report: "ok", model: "m", costMicros: 1 }), { now: now() })).rejects.toThrow(/shared daily AI report budget/);
+  });
+
+  it("lets an administrator pause and resume AI reports for every account", async () => {
+    const audit = await start(alice, aliceSite);
+    await executeJob(deps(), (await claimJob(db, "w1", settings, timing, now()))!, control());
+    const service = customerAudits(db, alice, settings);
+    const generate = async () => ({ report: "ok", model: "m", costMicros: 1 });
+    await expect(setAiPaused(db, bob.userId, true)).rejects.toThrow();
+    await db.insert(saasSchema.administrators).values({ userId: bob.userId });
+    try {
+      expect(await setAiPaused(db, bob.userId, true, now())).toMatchObject({ paused: true, changedBy: bob.userId });
+      await expect(service.consultantReport(audit, generate, { now: now() })).rejects.toThrow(/paused by an administrator/);
+      expect((await service.usage(now())).used.aiThisMonth).toBe(0);
+      advance(1_000);
+      expect(await setAiPaused(db, bob.userId, false, now())).toMatchObject({ paused: false });
+      expect(await service.consultantReport(audit, generate, { now: now() })).toMatchObject({ cached: false });
+    } finally {
+      await db.delete(saasSchema.administrators).where(eq(saasSchema.administrators.userId, bob.userId));
+      await db.delete(saasSchema.activity).where(inArray(saasSchema.activity.action, ["ai.paused", "ai.resumed"]));
+    }
   });
 
   it("returns the AI allowance when the provider fails to produce a report", async () => {

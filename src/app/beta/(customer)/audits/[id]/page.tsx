@@ -14,6 +14,7 @@ import { SeverityBadge } from "@/components/app/status";
 import { formatDate, shortUrl } from "@/components/app/format";
 import { AiReportButton, CancelAuditButton, RerunPagespeedButton, RunAuditButton } from "@/components/beta/audit-actions";
 import { isAiConfigured } from "@/lib/ai/consultant";
+import { aiSwitch } from "@/lib/saas/ai-switch";
 import { CATEGORY_WEIGHTS, assessScore, scoreLabel } from "@/lib/audit/scoring";
 import { CATEGORIES, CATEGORY_LABELS, type Category } from "@/lib/audit/types";
 import { buildActionPlan } from "@/lib/reports/action-plan";
@@ -65,6 +66,7 @@ async function AuditContent({ params }: PageProps<"/beta/audits/[id]">) {
     audits.history({ websiteId: status.websiteId, limit: 50 }),
     auditSearchSummary(runtime.db, runtime.config.google, tenant, status.websiteId),
   ]);
+  const aiPaused = !full.audit.aiReport && isAiConfigured() && (await aiSwitch(runtime.db)).paused;
   const { audit, meta, issues, checks, performance } = full;
   const previous = history.find((h) => h.status === "completed" && h.id !== audit.id && (h.completedAt ?? "") < (audit.completedAt?.toISOString() ?? ""));
   const counts = audit.counts ?? {};
@@ -184,7 +186,7 @@ async function AuditContent({ params }: PageProps<"/beta/audits/[id]">) {
 
       <Section title="AI consultant report" description="Optional narrative report written by an AI model from this audit's measured data only. Each audit can have one report, which uses one of your monthly AI reports.">
         {audit.aiReport ? <div className="rounded-lg border bg-card p-5"><Markdown>{audit.aiReport}</Markdown></div> : null}
-        {audit.aiReport ? null : isAiConfigured() ? <div className="mt-3"><AiReportButton auditId={audit.id} /></div> : <p className="text-sm text-muted-foreground">The AI consultant is not enabled for the beta yet. Fix with AI instructions above work with any AI coding tool.</p>}
+        {audit.aiReport ? null : !isAiConfigured() ? <p className="text-sm text-muted-foreground">The AI consultant is not enabled for the beta yet. Fix with AI instructions above work with any AI coding tool.</p> : aiPaused ? <p className="text-sm text-muted-foreground">AI reports are paused for now. Fix with AI instructions above work with any AI coding tool.</p> : <div className="mt-3"><AiReportButton auditId={audit.id} /></div>}
       </Section>
 
       {(unverified.length > 0 || (meta?.notes.length ?? 0) > 0) && (

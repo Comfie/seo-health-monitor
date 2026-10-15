@@ -29,7 +29,7 @@
 | PageSpeed tests per month | 60. Each audit tests 3 pages on mobile and desktop, so 6 per audit. |
 | AI reports per month | 5. Each audit gets one report (no regenerating); viewing it again is free, and a failed generation is refunded. |
 
-The whole system runs at most 2 audits at once, queues up to 50, allows 400 PageSpeed tests a day, and caps AI spend at **$1 a day** across all accounts (`PHASE2_GLOBAL_AI_USD_PER_DAY`), roughly 20 reports at about $0.05 each. Each report's real cost is calculated from the tokens it used; a report being written counts as $0.10 until it finishes, so a new one starts only while at least $0.10 of the day's budget is left. Admin → Operations shows today's AI spend. Administrators can override limits per account under **Admin**.
+The whole system runs at most 2 audits at once, queues up to 50, allows 400 PageSpeed tests a day, and caps AI spend at **$1 a day** across all accounts (`PHASE2_GLOBAL_AI_USD_PER_DAY`), roughly 20 reports at about $0.05 each. Each report's real cost is calculated from the tokens it used; a report being written counts as $0.10 until it finishes, so a new one starts only while at least $0.10 of the day's budget is left. Admin → Operations shows today's AI spend and has a **Pause AI reports** button that stops new reports for every account immediately, with no redeploy, until an administrator resumes them. Each pause and resume is recorded with who did it and when. Administrators can override limits per account under **Admin**.
 
 ## Before inviting testers widely
 

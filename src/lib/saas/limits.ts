@@ -4,6 +4,7 @@ import { and, count, eq, gte, inArray, sql, sum } from "drizzle-orm";
 import type { SaasDb } from "./db";
 import { activity, jobs, usageRecords } from "./operations-schema";
 import { tenants } from "./tenancy-schema";
+import { aiSwitch } from "./ai-switch";
 
 /**
  * Free-beta resource controls (not commercial plans). Defaults come from server-side
@@ -153,6 +154,7 @@ export async function reserveUsage(db: SaasDb, input: { tenantId: string; auditI
       throw new BudgetExhaustedError(`This account's monthly ${label} allowance (${monthly}) has been used.`);
     }
     await advisoryLock(tx, LOCK_BUDGET[input.kind]);
+    if (input.kind === "ai" && (await aiSwitch(tx)).paused) throw new BudgetExhaustedError("AI reports are paused by an administrator. Try again later.");
     const overDaily = input.kind === "ai"
       ? (await spentMicros(tx, dayStart(now))) + AI_RESERVATION_MICROS > input.settings.global.aiMicrosPerDay
       : (await usedUnits(tx, { kind: input.kind, since: dayStart(now) })) + units > input.settings.global.pagespeedPerDay;

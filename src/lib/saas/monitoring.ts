@@ -1,9 +1,10 @@
 import 'server-only';
-import { count, gte, sql } from 'drizzle-orm';
+import { count, eq, gte, sql } from 'drizzle-orm';
 import type { SaasDb } from './db';
 import { assertAdministrator } from './administration';
 import { jobs, operationalEvents, systemHeartbeats } from './operations-schema';
-import { searchConsoleJobs } from './schema';
+import { searchConsoleJobs, user } from './schema';
+import { aiSwitch } from './ai-switch';
 import { dayStart, monthStart, readLimitSettings, spentMicros, usedUnits, type LimitSettings } from './limits';
 
 export async function operationsSnapshot(db: SaasDb, actorId: string, settings: LimitSettings = readLimitSettings(), now = new Date()) {
@@ -16,13 +17,15 @@ export async function operationsSnapshot(db: SaasDb, actorId: string, settings: 
       lastFinishedAt: sql<string | null>`max(${table.finishedAt})`}).from(table);
     return r;
   };
-  const [audits, searchConsole, beats, events, daily, monthly, aiSpentToday] = await Promise.all([
+  const [audits, searchConsole, beats, events, daily, monthly, aiSpentToday, ai] = await Promise.all([
     aggregate(jobs), aggregate(searchConsoleJobs), db.select().from(systemHeartbeats),
     db.select({kind: operationalEvents.kind, count: count()}).from(operationalEvents).where(gte(operationalEvents.createdAt, new Date(now.getTime()-86400_000))).groupBy(operationalEvents.kind),
     Promise.all((['audit','pagespeed','ai'] as const).map(async kind=>({kind,units:await usedUnits(db,{kind,since:dayStart(now)})}))),
     Promise.all((['audit','pagespeed','ai'] as const).map(async kind=>({kind,units:await usedUnits(db,{kind,since:monthStart(now)})}))),
     spentMicros(db, dayStart(now)),
+    aiSwitch(db),
   ]);
+  const [changer] = ai.changedBy ? await db.select({email: user.email}).from(user).where(eq(user.id, ai.changedBy)) : [];
   const fresh = (role: string) => beats.some(b => b.role===role && now.getTime()-b.lastSeenAt.getTime()<90_000);
   const failures = Object.fromEntries(events.map(e=>[e.kind,e.count]));
   const alerts: {code: string; message: string}[] = [];
@@ -37,6 +40,7 @@ export async function operationsSnapshot(db: SaasDb, actorId: string, settings: 
   const lastProgress = Math.max(0, ...beats.filter(b=>b.role==='worker').map(b=>b.lastProgressAt?.getTime()??0));
   add(queued>0 && now.getTime()-lastProgress>10*60_000, 'no_progress', 'The queue has work but no completion for ten minutes.');
   add((failures['audit.failed']??0)>=3, 'repeated_audit_failures', 'Three or more audits failed in the last 24 hours.');
+  add(ai.paused, 'ai_paused', 'AI reports are paused by an administrator.');
   add((failures['database.failure']??0)>0, 'database_failures', 'Database failures recorded. Check Railway structured logs for outages during which events could not be persisted.');
   const pagespeedCap = settings.global.pagespeedPerDay, aiCap = settings.global.aiMicrosPerDay;
   add(pagespeedCap>0 && (daily.find(x=>x.kind==='pagespeed')?.units??0)>=pagespeedCap*.8, 'pagespeed_budget', 'pagespeed has used at least 80% of the daily budget.');
@@ -44,5 +48,6 @@ export async function operationsSnapshot(db: SaasDb, actorId: string, settings: 
   const finished=audits.completed+audits.failed;
   return {checkedAt: now.toISOString(), webHealthy: fresh('web'), workerHealthy: fresh('worker'), queues: {audits,searchConsole}, rates: {completion: finished ? audits.completed/finished : null, failure: finished ? audits.failed/finished : null}, failuresLast24Hours: failures,
     usage: {daily,monthly, aiSpentTodayMicros: aiSpentToday, caps: settings.global}, alerts,
+    ai: {paused: ai.paused, changedBy: changer?.email ?? null, changedAt: ai.changedAt?.toISOString() ?? null},
     note: 'Rates cover retained jobs. Usage counts retained reservations plus anonymous deleted-account daily totals, not provider billing. Database failures during outages are available in structured Railway logs; the database cannot record its own outage.'};
 }

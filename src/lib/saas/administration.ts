@@ -7,6 +7,7 @@ import { effectiveLimits, readLimitSettings, usageSummary, type LimitSettings } 
 import { activity, jobs } from './operations-schema';
 import { user, tenants, administrators, session, audits, searchConsoleJobs, sites } from './schema';
 import { AccessDeniedError } from './tenant';
+import { aiSwitch } from './ai-switch';
 
 export const accountChange = z.object({
   status: z.enum(['active', 'suspended']).optional(),
@@ -70,4 +71,11 @@ export async function changeAccount(db: SaasDb, actorId: string, targetUserId: s
     }
     return { updated: true };
   });
+}
+
+/** Pauses or resumes the AI consultant for every account. Recorded in the activity log. */
+export async function setAiPaused(db: SaasDb, actorId: string, paused: boolean, now = new Date()) {
+  await assertAdministrator(db, actorId);
+  await db.insert(activity).values({ id: randomUUID(), tenantId: null, actorId, action: paused ? 'ai.paused' : 'ai.resumed', createdAt: now });
+  return aiSwitch(db);
 }

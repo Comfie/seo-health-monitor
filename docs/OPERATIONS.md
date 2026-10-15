@@ -115,6 +115,7 @@ There are no automatic backups yet. Until there are:
 | Oldest queued audit | Over 10 minutes old |
 | Final audit failures | 3 or more in 24 hours |
 | PageSpeed tests or AI spend | 80% of the daily cap |
+| AI paused | An administrator paused AI reports (Admin → Operations → Resume AI reports) |
 
 ## Common tasks
 
