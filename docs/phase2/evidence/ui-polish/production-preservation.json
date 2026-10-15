@@ -1,0 +1,9 @@
+{
+  "checkedAt": "2026-10-15T11:15:30.451Z",
+  "betaUiRevision": "6d2a9a043032b1bcbdbc2adeac56682449fe834a",
+  "betaDeploymentId": "8dcf3927-3dc9-43a3-bf7d-a50f80d118ed",
+  "betaDeploymentStatus": "SUCCESS",
+  "productionDeploymentUnchanged": true,
+  "productionVariablesUnchanged": true,
+  "productionRevision": "b3a86700fab74da2d0a40a5e138d445a4e9fccaa"
+}

@@ -24,7 +24,7 @@ describe("crypto", () => {
     expect(sealed).not.toContain("refresh-token");
     expect(decrypt(sealed, "a")).toBe("refresh-token");
     expect(decrypt(sealed, "b")).toBeNull();
-    const tampered = sealed.slice(0, -2) + (sealed.endsWith("A") ? "B" : "A") + sealed.slice(-1);
+    const tampered = sealed.slice(0, -2) + (sealed.at(-2) === "A" ? "B" : "A") + sealed.slice(-1);
     expect(decrypt(tampered, "a")).toBeNull();
     expect(decrypt("garbage", "a")).toBeNull();
   });

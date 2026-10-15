@@ -23,6 +23,7 @@ function open(): Db {
 }
 
 export function getDb(): Db {
+  if (process.env.PHASE2_UNIFIED === "true") throw new Error("Legacy SQLite access is disabled in the unified application.");
   if (!globalForDb.__seoDb) globalForDb.__seoDb = open();
   return globalForDb.__seoDb;
 }

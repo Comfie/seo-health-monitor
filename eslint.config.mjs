@@ -20,6 +20,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     ".playwright-mcp/**",
     "drizzle/**",
+    ".workflow-data/**",
+    ".workflow-vitest/**",
   ]),
 ]);
 

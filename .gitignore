@@ -47,6 +47,8 @@ next-env.d.ts
 
 # browser automation artefacts
 /.playwright-mcp
+/.workflow-data/
+/.workflow-vitest/
 
 # generated reports / exports
 /reports/

@@ -3,6 +3,7 @@ import type { FullAudit } from "@/lib/audit/repository";
 import { buildActionPlan } from "./action-plan";
 import { assessScore } from "@/lib/audit/scoring";
 import { CATEGORY_LABELS } from "@/lib/audit/types";
+import type { ReportSearchConsole } from "./search-summary";
 
 function csvCell(value: unknown): string {
   const text = value === null || value === undefined ? "" : Array.isArray(value) ? value.join(" | ") : String(value);
@@ -19,7 +20,7 @@ export function issuesToCsv(full: FullAudit): string {
   return [header.join(","), ...rows].join("\r\n");
 }
 
-export function auditToJson(full: FullAudit) {
+export function auditToJson(full: FullAudit, extras: { searchConsole?: ReportSearchConsole } = {}) {
   const { audit, meta, checks, issues, pages, performance } = full;
   return {
     generator: "SEO Health Monitor",
@@ -49,6 +50,6 @@ export function auditToJson(full: FullAudit) {
     issues: issues.map(({ id: _id, auditId: _a, ...i }) => i),
     pages: pages.map((p) => ({ url: p.url, finalUrl: p.finalUrl, status: p.status, title: p.title, metaDescription: p.metaDescription, h1: p.h1, canonical: p.canonical, metaRobots: p.metaRobots, wordCount: p.wordCount, responseTimeMs: p.responseTimeMs })),
     performance: performance.map(({ id: _id, auditId: _a, ...p }) => p),
-    searchConsole: { connected: false, note: "Search Console metrics are not part of this audit." },
+    searchConsole: extras.searchConsole ?? { connected: false, note: "Search Console metrics are not part of this audit." },
   };
 }

@@ -1,0 +1,8 @@
+{
+  "applied": "0004",
+  "migrationCount": 5,
+  "existingTablesUnchanged": true,
+  "runtimeRole": {
+    "stagingruntimesuperuser": true
+  }
+}

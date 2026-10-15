@@ -17,6 +17,7 @@ export const config = {
   pagespeedApiKey: strEnv("PAGESPEED_API_KEY"),
   anthropicApiKey: strEnv("ANTHROPIC_API_KEY"),
   aiModel: strEnv("AI_MODEL") ?? "claude-opus-5-5",
+  auditConcurrency: intEnv("AUDIT_CONCURRENCY", 2, 1, 2),
   crawl: {
     maxPages: intEnv("CRAWL_MAX_PAGES", 25, 1, 100),
     concurrency: intEnv("CRAWL_CONCURRENCY", 2, 1, 5),

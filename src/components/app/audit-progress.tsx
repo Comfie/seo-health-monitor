@@ -12,7 +12,7 @@ interface StatusPayload {
   error: string | null;
 }
 
-export function AuditProgress({ auditId, initial }: { auditId: number; initial: StatusPayload }) {
+export function AuditProgress({ auditId, initial, statusUrl = `/api/audits/${auditId}` }: { auditId: number; initial: StatusPayload; statusUrl?: string }) {
   const router = useRouter();
   const [state, setState] = useState(initial);
   const [pollError, setPollError] = useState<string | null>(null);
@@ -21,13 +21,13 @@ export function AuditProgress({ auditId, initial }: { auditId: number; initial: 
     let stopped = false;
     const tick = async () => {
       try {
-        const res = await fetch(`/api/audits/${auditId}`, { cache: "no-store" });
+        const res = await fetch(statusUrl, { cache: "no-store" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const { audit } = (await res.json()) as { audit: StatusPayload };
         if (stopped) return;
         setState(audit);
         setPollError(null);
-        if (audit.status === "completed" || audit.status === "failed") {
+        if (audit.status === "completed" || audit.status === "failed" || audit.status === "cancelled") {
           router.refresh();
           return;
         }
@@ -41,7 +41,7 @@ export function AuditProgress({ auditId, initial }: { auditId: number; initial: 
       stopped = true;
       clearTimeout(timer);
     };
-  }, [auditId, router]);
+  }, [statusUrl, router]);
 
   return (
     <div className="rounded-lg border bg-card p-6" aria-live="polite">

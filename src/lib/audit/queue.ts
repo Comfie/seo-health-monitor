@@ -1,5 +1,6 @@
 import "server-only";
 import { and, asc, count, eq, inArray, isNull, lt, or } from "drizzle-orm";
+import { config } from "@/lib/config";
 import { getDb, schema } from "@/lib/db";
 import { assertSafeUrl } from "@/lib/crawler/ssrf";
 import { normalizeInputUrl, stripWww } from "@/lib/crawler/url";
@@ -16,7 +17,7 @@ import { executeAudit } from "./runner";
 
 export class AuditBusyError extends Error {}
 
-const MAX_CONCURRENT = 2;
+const MAX_CONCURRENT = config.auditConcurrency;
 const MAX_QUEUED = 20;
 const MAX_ATTEMPTS = 2;
 const POLL_MS = 2_000;
@@ -28,6 +29,7 @@ interface WorkerState {
   running: Set<number>;
   timer?: NodeJS.Timeout;
   ticking: boolean;
+  stopping?: boolean;
 }
 const state = ((globalThis as unknown as { __auditWorker?: WorkerState }).__auditWorker ??= { started: false, running: new Set(), ticking: false });
 
@@ -44,6 +46,9 @@ export function enqueueAudit(inputUrl: string): number {
   const startUrl = normalizeInputUrl(inputUrl);
   assertSafeUrl(startUrl);
   const db = getDb();
+  const existing = db.select({ id: schema.audits.id }).from(schema.audits)
+    .where(and(eq(schema.audits.startUrl, startUrl), inArray(schema.audits.status, ["queued", "running"]))).get();
+  if (existing) return existing.id;
   const queued = db.select({ n: count() }).from(schema.audits).where(eq(schema.audits.status, "queued")).get()?.n ?? 0;
   if (queued >= MAX_QUEUED) throw new AuditBusyError(`${queued} audits are already waiting. Try again once some have finished.`);
   const host = stripWww(new URL(startUrl).hostname);
@@ -109,14 +114,14 @@ async function run(job: { id: number; startUrl: string }): Promise<void> {
 }
 
 async function tick(): Promise<void> {
-  if (state.ticking) return;
+  if (state.ticking || state.stopping) return;
   state.ticking = true;
   try {
     recoverStaleAudits();
     while (state.running.size < MAX_CONCURRENT) {
       const job = claimNextAudit();
       if (!job) break;
-      void run(job);
+      void run(job).catch(() => console.error("[audit-worker] job failed; heartbeat recovery will retry"));
     }
   } catch (err) {
     console.error("[audit-worker] tick failed", err);
@@ -127,7 +132,7 @@ async function tick(): Promise<void> {
 
 /** Idempotent; called from instrumentation at server start and lazily on enqueue. */
 export function startWorker(): void {
-  if (state.started) return;
+  if (state.started || state.stopping) return;
   state.started = true;
   try {
     pruneRateLimits();
@@ -137,4 +142,10 @@ export function startWorker(): void {
   state.timer = setInterval(() => void tick(), POLL_MS);
   state.timer.unref?.();
   void tick();
+}
+
+/** Stop claiming work; interrupted claims remain durable for heartbeat recovery. */
+export function stopWorker(): void {
+  state.stopping = true;
+  if (state.timer) clearInterval(state.timer);
 }

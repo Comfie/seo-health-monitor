@@ -42,6 +42,7 @@ export function AuditStatusBadge({ status }: { status: string }) {
     running: "bg-primary/10 text-primary",
     queued: "bg-muted text-muted-foreground",
     failed: "bg-sev-critical/10 text-sev-critical",
+    cancelled: "bg-muted text-muted-foreground line-through",
   };
   return <span className={cn("inline-flex rounded px-1.5 py-0.5 text-xs font-medium capitalize", map[status])}>{status}</span>;
 }

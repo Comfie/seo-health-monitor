@@ -4,6 +4,11 @@ import { runPageSpeed, type PageSpeedOptions } from "./pagespeed";
 export interface RunJobsOptions extends PageSpeedOptions {
   concurrency: number;
   onProgress?: (done: number, total: number, label: string) => void;
+  /** Called before each test; a returned string skips the test with that reason (e.g. a spent budget). */
+  beforeTest?: (job: { url: string; strategy: "mobile" | "desktop" }) => Promise<string | null>;
+  /** Test seam; defaults to the real PageSpeed Insights client. */
+  run?: typeof runPageSpeed;
+  signal?: AbortSignal;
 }
 
 /**
@@ -19,13 +24,19 @@ export async function runPerformanceJobs(urls: string[], options: RunJobsOptions
   await Promise.all(
     Array.from({ length: Math.max(1, options.concurrency) }, async () => {
       while (cursor < jobs.length) {
+        options.signal?.throwIfAborted();
         const job = jobs[cursor++];
         if (quotaError) {
           results.push({ ...job, status: "unavailable", error: `Not tested: ${quotaError}`, errorCode: "skipped", opportunities: [] });
           continue;
         }
+        const skip = options.beforeTest ? await options.beforeTest(job) : null;
+        if (skip) {
+          results.push({ ...job, status: "unavailable", error: `Not tested: ${skip}`, errorCode: "skipped", opportunities: [] });
+          continue;
+        }
         options.onProgress?.(results.length, jobs.length, `PageSpeed Insights (${job.strategy}): ${job.url}`);
-        const result = await runPageSpeed(job.url, job.strategy, options);
+        const result = await (options.run ?? runPageSpeed)(job.url, job.strategy, options);
         if (result.errorCode === "quota") quotaError = result.error ?? "quota exceeded";
         results.push(result);
       }

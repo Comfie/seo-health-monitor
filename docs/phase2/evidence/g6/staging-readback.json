@@ -1,0 +1,58 @@
+{
+  "checkedAt": "2026-10-15T08:25:09.723Z",
+  "services": [
+    {
+      "name": "seo-beta-web",
+      "deployments": [
+        {
+          "id": "a3460772-32c0-4f60-b9b0-81107e5f4c5e",
+          "status": "SUCCESS",
+          "image": "sha256:4b9cfa8d05f7b4a3b32b1a72df09d709d31a8a0cdd58184f3290845cbd55c889",
+          "message": "G5 Search Console 04d8ca0",
+          "running": 1
+        }
+      ],
+      "limits": {
+        "PHASE2_GLOBAL_PAGESPEED_PER_DAY": "40",
+        "PHASE2_LIMIT_PAGES_PER_SCAN": "5"
+      },
+      "googleConfigured": false,
+      "pageSpeedKeyConfigured": false
+    },
+    {
+      "name": "seo-health-monitor",
+      "deployments": [
+        {
+          "id": "b921c2dc-3e09-4386-8605-209ece6febb1",
+          "status": "SUCCESS",
+          "image": "sha256:46a99985a198bfb86c7c550d576ca6fbb3b4705cb7b1d4d7103f8b63eb02c340",
+          "message": null,
+          "running": 1
+        }
+      ]
+    },
+    {
+      "name": "seo-beta-worker",
+      "deployments": [
+        {
+          "id": "cb5a947b-7343-4d09-b7ca-f2e83c356b3d",
+          "status": "SUCCESS",
+          "image": "sha256:738423e71e8e23b63e30cd711715b0a42ce11ee13298ab396b76c047ea9d40bf",
+          "message": "G5 Search Console 04d8ca0",
+          "running": 1
+        }
+      ],
+      "limits": {
+        "PHASE2_GLOBAL_PAGESPEED_PER_DAY": "40",
+        "PHASE2_LIMIT_PAGES_PER_SCAN": "5",
+        "PHASE2_WORKER_CONCURRENCY": "1"
+      },
+      "googleConfigured": false,
+      "pageSpeedKeyConfigured": false
+    }
+  ],
+  "health": {
+    "beta": 200,
+    "phase1": 200
+  }
+}

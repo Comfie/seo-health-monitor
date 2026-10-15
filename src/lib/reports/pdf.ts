@@ -1,5 +1,6 @@
 import "server-only";
 import PDFDocument from "pdfkit";
+import type { ReportSearchConsole } from "./search-summary";
 import type { FullAudit } from "@/lib/audit/repository";
 import { CATEGORIES, CATEGORY_LABELS } from "@/lib/audit/types";
 import { assessScore, scoreLabel } from "@/lib/audit/scoring";
@@ -36,7 +37,7 @@ function scoreColor(score: number | null): string {
   return COLORS.critical;
 }
 
-export async function renderAuditPdf(full: FullAudit): Promise<Buffer> {
+export async function renderAuditPdf(full: FullAudit, extras: { searchConsole?: ReportSearchConsole } = {}): Promise<Buffer> {
   const { audit, meta, checks, issues, performance } = full;
   const doc = new PDFDocument({ size: "A4", margin: 50, bufferPages: true, info: { Title: `SEO audit - ${meta?.origin ?? audit.startUrl}`, Author: "SEO Health Monitor" } });
   const chunks: Buffer[] = [];
@@ -89,6 +90,35 @@ export async function renderAuditPdf(full: FullAudit): Promise<Buffer> {
   if (meta?.notes.length) {
     doc.moveDown(0.5);
     for (const n of meta.notes) muted(`Note: ${n}`);
+  }
+
+  // Owner-authorised Google data, kept apart from the on-site score.
+  const sc = extras.searchConsole;
+  if (sc && !sc.verified) {
+    doc.moveDown(0.5);
+    muted(`Google Search Console: not verified. ${sc.note}`);
+  } else if (sc?.verified) {
+    doc.addPage();
+    h1("Google search performance");
+    muted(`Source: ${sc.source}, property ${sc.property}, ${sc.period.start} to ${sc.period.end} (fetched ${sc.fetchedAt.slice(0, 10)}). Google's data lags 2-3 days. These figures are not part of the on-site health score.`);
+    doc.moveDown(0.4);
+    const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
+    const prev = sc.previous;
+    body(`Clicks: ${Math.round(sc.clicks)}${prev ? ` (previous period ${Math.round(prev.clicks)})` : ""}`);
+    body(`Impressions: ${Math.round(sc.impressions)}${prev ? ` (previous period ${Math.round(prev.impressions)})` : ""}`);
+    body(`Average CTR: ${pct(sc.ctr)}${prev ? ` (previous period ${pct(prev.ctr)})` : ""}`);
+    body(`Average position: ${sc.position === null ? "no impressions" : sc.position.toFixed(1)}`);
+    if (sc.topQueries.length) {
+      h2("Top search queries");
+      for (const q of sc.topQueries.slice(0, 10)) body(`${q.key} - ${Math.round(q.clicks)} clicks, ${Math.round(q.impressions)} impressions, position ${q.position.toFixed(1)}`);
+    }
+    if (sc.topPages.length) {
+      h2("Top landing pages");
+      for (const p of sc.topPages.slice(0, 10)) body(`${p.key} - ${Math.round(p.clicks)} clicks, ${Math.round(p.impressions)} impressions`);
+    }
+    h2("Google index status");
+    body(sc.indexing.inspected ? `${sc.indexing.inspected - sc.indexing.notIndexed.length} of ${sc.indexing.inspected} inspected pages are indexed by Google.` : "No pages have been inspected yet.");
+    for (const n of sc.indexing.notIndexed.slice(0, 15)) muted(`Not indexed: ${n.url} - ${n.coverage}`);
   }
 
   // Action plan

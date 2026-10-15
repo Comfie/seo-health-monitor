@@ -1,0 +1,21 @@
+# Excluded from `railway up` uploads (in addition to .gitignore). Never upload local data,
+# secrets, backups or test artefacts to a build.
+# gitignore syntax: a pattern without a leading "/" matches at ANY depth, so directory
+# patterns are anchored to the repository root (an unanchored "reports" once dropped
+# src/lib/reports from an upload).
+/data/
+.env*
+!.env.example
+/.workflow-data/
+/.workflow-vitest/
+/.playwright-mcp/
+/.next/
+/node_modules/
+/coverage/
+/reports/
+/dist/
+*.db
+*.db-*
+*.sqlite*
+*.bundle
+*.log

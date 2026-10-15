@@ -16,6 +16,8 @@ export interface CrawlOptions {
   maxBytes: number;
   maxLinkChecks: number;
   onProgress?: (percent: number, message: string) => void;
+  /** Cooperative cancellation: checked between requests; in-flight requests keep their own timeouts. */
+  signal?: AbortSignal;
 }
 
 interface QueueItem {
@@ -95,6 +97,7 @@ async function hostCheck(url: string, timeoutMs: number): Promise<HostCheck> {
 /** Crawls a site politely: robots.txt respected, bounded concurrency, page cap. */
 export async function crawlSite(inputUrl: string, options: CrawlOptions): Promise<CrawlResult> {
   const progress = options.onProgress ?? (() => {});
+  const stopIfAborted = () => options.signal?.throwIfAborted();
   const startUrl = normalizeInputUrl(inputUrl);
   const notes: string[] = [];
 
@@ -110,6 +113,7 @@ export async function crawlSite(inputUrl: string, options: CrawlOptions): Promis
   const siteHost = finalHome.hostname;
   const origin = finalHome.origin;
 
+  stopIfAborted();
   progress(6, "Reading robots.txt");
   const robots = await fetchRobots(origin, options.timeoutMs);
   const crawlDelayMs = Math.min(5_000, Math.max(300, (robots.info.crawlDelay ?? 0) * 1000));
@@ -168,7 +172,7 @@ export async function crawlSite(inputUrl: string, options: CrawlOptions): Promis
 
   let inFlight = 0;
   const worker = async () => {
-    while (pages.length + inFlight < options.maxPages) {
+    while (!options.signal?.aborted && pages.length + inFlight < options.maxPages) {
       const item = nextItem();
       if (!item) {
         if (inFlight === 0) return;
@@ -202,6 +206,7 @@ export async function crawlSite(inputUrl: string, options: CrawlOptions): Promis
     }
   };
   await Promise.all(Array.from({ length: options.concurrency }, worker));
+  stopIfAborted();
 
   // Check internal link targets that weren't crawled so broken links are still found.
   progress(62, "Checking internal links");
@@ -215,7 +220,7 @@ export async function crawlSite(inputUrl: string, options: CrawlOptions): Promis
   let cursor = 0;
   await Promise.all(
     Array.from({ length: options.concurrency }, async () => {
-      while (cursor < batch.length) {
+      while (!options.signal?.aborted && cursor < batch.length) {
         const url = batch[cursor++];
         let res = await safeFetch(url, { method: "HEAD", timeoutMs: options.timeoutMs });
         if (res.error || (res.status !== null && [403, 405, 501].includes(res.status))) {
@@ -231,6 +236,7 @@ export async function crawlSite(inputUrl: string, options: CrawlOptions): Promis
     notes.push(`${uncheckedLinkCount} additional internal link targets were not status-checked because of the per-audit link-check limit.`);
   }
 
+  stopIfAborted();
   progress(66, "Checking HTTPS and host redirects");
   const httpToHttps = origin.startsWith("https:") ? await hostCheck(`http://${siteHost}/`, options.timeoutMs) : null;
   const variantHost = siteHost.startsWith("www.") ? siteHost.slice(4) : `www.${siteHost}`;

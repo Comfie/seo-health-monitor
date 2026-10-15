@@ -3,14 +3,11 @@ import { eq, sql } from "drizzle-orm";
 import { config } from "@/lib/config";
 import { getDb, schema } from "@/lib/db";
 import { crawlSite, CrawlError } from "@/lib/crawler/crawl";
-import { isUtilityPage } from "./checks/helpers";
 import { runPerformanceJobs } from "@/lib/performance/run";
-import { runChecks } from "./checks";
-import { collectLocalSignals } from "./local-signals";
-import { computeCounts, computeScores } from "./scoring";
+import { analyseAudit, buildAuditMeta, selectPerformancePages, slimPage } from "./pipeline";
 import { fetchSnapshot, getSiteConnection } from "@/lib/integrations/search-console/service";
 import { searchConsoleContext } from "./index-status";
-import type { AuditContext, CrawlResult, PageData, PerformanceResult } from "./types";
+import type { AuditContext, CrawlResult, PerformanceResult } from "./types";
 
 function progressUpdater(auditId: number) {
   const db = getDb();
@@ -30,16 +27,7 @@ function progressUpdater(auditId: number) {
   };
 }
 
-/** Homepage plus the most-linked content pages: a representative PageSpeed sample. */
-export function selectPerformancePages(crawl: CrawlResult, max: number): string[] {
-  const candidates = crawl.pages.filter((p) => p.extracted && p.status === 200 && !p.extracted.metaRobots?.includes("noindex"));
-  const home = candidates.find((p) => p.depth === 0);
-  const others = candidates
-    .filter((p) => p !== home && !isUtilityPage(p.finalUrl))
-    .map((p) => ({ url: p.finalUrl, inbound: (crawl.inlinks[p.finalUrl] ?? crawl.inlinks[p.url] ?? []).length }))
-    .sort((a, b) => b.inbound - a.inbound);
-  return [...new Set([home?.finalUrl, ...others.map((o) => o.url)].filter((u): u is string => !!u))].slice(0, max);
-}
+export { selectPerformancePages };
 
 async function runPerformance(crawl: CrawlResult, report: (p: number, m: string, force?: boolean) => void): Promise<{ results: PerformanceResult[]; skipped?: string }> {
   if (config.pagespeed.maxPages === 0) return { results: [], skipped: "PageSpeed testing is disabled (PAGESPEED_MAX_PAGES=0)." };
@@ -53,12 +41,6 @@ async function runPerformance(crawl: CrawlResult, report: (p: number, m: string,
     onProgress: (done, total, label) => report(70 + (done / total) * 22, label, true),
   });
   return { results };
-}
-
-function slimPage(page: PageData): Record<string, unknown> {
-  if (!page.extracted) return { ...page };
-  const { shingles: _shingles, bodyText, ...extracted } = page.extracted;
-  return { ...page, extracted: { ...extracted, bodyText: bodyText.slice(0, 1500) } };
 }
 
 /** Runs one claimed audit end to end. Called by the queue worker. Never throws. */
@@ -81,30 +63,9 @@ export async function executeAudit(auditId: number, startUrl: string): Promise<v
       await fetchSnapshot(siteId, { auditId, pageUrls }).catch((err) => console.error(`[audit ${auditId}] Search Console snapshot failed`, err));
     }
     const ctx: AuditContext = { ...crawl, performance: perf.results, performanceSkippedReason: perf.skipped, searchConsole: searchConsoleContext(siteId, pageUrls) };
-    const checks = runChecks(ctx);
-    const issues = checks.flatMap((c) => c.issues);
-    const scores = computeScores(checks);
-    const counts = computeCounts(checks, issues);
-    const local = collectLocalSignals(ctx);
+    const { checks, issues, scores, counts, local } = analyseAudit(ctx);
 
-    const meta = {
-      siteHost: crawl.siteHost,
-      origin: crawl.origin,
-      robots: { ...crawl.robots, content: crawl.robots.content?.slice(0, 5000) },
-      sitemap: { files: crawl.sitemap.files, found: crawl.sitemap.found, urlCount: crawl.sitemap.urls.length, sampleUrls: crawl.sitemap.urls.slice(0, 100) },
-      httpToHttps: crawl.httpToHttps,
-      hostVariant: crawl.hostVariant,
-      notFoundProbe: crawl.notFoundProbe,
-      blockedByRobots: crawl.blockedByRobots.slice(0, 100),
-      discoveredUrlCount: crawl.discoveredUrlCount,
-      uncheckedLinkCount: crawl.uncheckedLinkCount,
-      linkTargetsChecked: Object.keys(crawl.linkChecks).length,
-      notes: crawl.notes,
-      local,
-      performanceSkippedReason: perf.skipped ?? null,
-      pagespeedKeyConfigured: !!config.pagespeedApiKey,
-      limits: { maxPages: config.crawl.maxPages, pagespeedPages: config.pagespeed.maxPages },
-    };
+    const meta = buildAuditMeta(crawl, perf, local, { pagespeedKeyConfigured: !!config.pagespeedApiKey, limits: { maxPages: config.crawl.maxPages, pagespeedPages: config.pagespeed.maxPages } });
 
     db.transaction((tx) => {
       for (const page of crawl.pages) {

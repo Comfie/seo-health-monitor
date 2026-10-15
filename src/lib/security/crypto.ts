@@ -18,25 +18,29 @@ export function hasAppSecret(): boolean {
   return !!value && value.length >= MIN_SECRET_LENGTH;
 }
 
-/** Derives independent keys per purpose so one key is never reused for two jobs. */
-function deriveKey(purpose: string): Buffer {
-  return Buffer.from(crypto.hkdfSync("sha256", secret(), "seo-health-monitor", purpose, 32));
+/**
+ * Derives independent keys per purpose so one key is never reused for two jobs.
+ * `root` overrides APP_SECRET for components with their own secret (the customer beta).
+ */
+function deriveKey(purpose: string, root?: string): Buffer {
+  if (root !== undefined && root.length < MIN_SECRET_LENGTH) throw new MissingSecretError(`Encryption secrets must be at least ${MIN_SECRET_LENGTH} characters.`);
+  return Buffer.from(crypto.hkdfSync("sha256", root ?? secret(), "seo-health-monitor", purpose, 32));
 }
 
 /** AES-256-GCM; output is base64url(iv | tag | ciphertext). */
-export function encrypt(plaintext: string, purpose = "encryption"): string {
+export function encrypt(plaintext: string, purpose = "encryption", root?: string): string {
   const iv = crypto.randomBytes(12);
-  const cipher = crypto.createCipheriv("aes-256-gcm", deriveKey(purpose), iv);
+  const cipher = crypto.createCipheriv("aes-256-gcm", deriveKey(purpose, root), iv);
   const body = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
   return Buffer.concat([iv, cipher.getAuthTag(), body]).toString("base64url");
 }
 
 /** Returns null for tampered, truncated or foreign ciphertext instead of throwing. */
-export function decrypt(token: string, purpose = "encryption"): string | null {
+export function decrypt(token: string, purpose = "encryption", root?: string): string | null {
   try {
     const raw = Buffer.from(token, "base64url");
     if (raw.length < 29) return null;
-    const decipher = crypto.createDecipheriv("aes-256-gcm", deriveKey(purpose), raw.subarray(0, 12));
+    const decipher = crypto.createDecipheriv("aes-256-gcm", deriveKey(purpose, root), raw.subarray(0, 12));
     decipher.setAuthTag(raw.subarray(12, 28));
     return Buffer.concat([decipher.update(raw.subarray(28)), decipher.final()]).toString("utf8");
   } catch (err) {

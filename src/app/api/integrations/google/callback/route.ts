@@ -2,8 +2,10 @@ import { guard } from "@/lib/security/guard";
 import { NextResponse, type NextRequest } from "next/server";
 import { OAUTH_COOKIE, readOAuthState } from "@/lib/integrations/search-console/oauth-state";
 import { completeConnection } from "@/lib/integrations/search-console/service";
+import { GET as tenantCallback } from "@/app/api/beta/google/callback/route";
 
 export async function GET(request: NextRequest) {
+  if (process.env.PHASE2_UNIFIED === "true") return tenantCallback(request);
   const denied = guard(request);
   if (denied) return denied;
   const params = request.nextUrl.searchParams;
@@ -18,7 +20,7 @@ export async function GET(request: NextRequest) {
 
   if (!saved) return back("/search-console", { error: "The sign-in session expired or didn't match. Please try connecting again." });
   if (params.get("error")) {
-    const reason = params.get("error") === "access_denied" ? "Access was not granted on Google's consent screen." : `Google returned: ${params.get("error")}`;
+    const reason = params.get("error") === "access_denied" ? "Access was not granted on Google's consent screen." : "Google sign-in failed. Try connecting again.";
     return back(saved.returnTo, { error: reason });
   }
   const code = params.get("code");
@@ -27,7 +29,7 @@ export async function GET(request: NextRequest) {
   try {
     await completeConnection(code, saved.verifier);
     return back(saved.returnTo, { connected: "1" });
-  } catch (err) {
-    return back(saved.returnTo, { error: (err as Error).message.slice(0, 200) });
+  } catch {
+    return back(saved.returnTo, { error: "Google connection failed. Check the callback URL, credentials and permissions, then reconnect." });
   }
 }

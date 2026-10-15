@@ -1,0 +1,105 @@
+{
+  "checkedAt": "2026-10-15T10:10:07.885Z",
+  "candidateRevision": "c1596d1cf5ad373396405c6647826d5793db538c",
+  "productionDeploymentUnchanged": true,
+  "productionVariablesUnchanged": true,
+  "productionHealth": 200,
+  "betaHealth": 200,
+  "preservation": {
+    "existingDomainTables": [
+      {
+        "table": "audits",
+        "unchanged": true
+      },
+      {
+        "table": "checks",
+        "unchanged": true
+      },
+      {
+        "table": "google_accounts",
+        "unchanged": true
+      },
+      {
+        "table": "issues",
+        "unchanged": true
+      },
+      {
+        "table": "pages",
+        "unchanged": true
+      },
+      {
+        "table": "performance_results",
+        "unchanged": true
+      },
+      {
+        "table": "search_console_connections",
+        "unchanged": true
+      },
+      {
+        "table": "search_snapshots",
+        "unchanged": true
+      },
+      {
+        "table": "sites",
+        "unchanged": true
+      }
+    ],
+    "allOriginalDomainRecordsUnchanged": true,
+    "usersAfter": 3,
+    "disposableUserRemoved": true,
+    "verifiedAdministratorPreserved": true,
+    "ownerCredentialUnchanged": true
+  },
+  "betaServices": [
+    {
+      "name": "web",
+      "unified": true,
+      "google": "ready",
+      "sharedClient": true,
+      "pageSpeedKeyMatchesProduction": true,
+      "googleClientMatchesProduction": true,
+      "pageSpeedDailyCap": "40",
+      "registration": "closed",
+      "invitationsEnabled": "false",
+      "retentionApproved": false
+    },
+    {
+      "name": "worker",
+      "unified": true,
+      "google": "ready",
+      "sharedClient": true,
+      "pageSpeedKeyMatchesProduction": true,
+      "googleClientMatchesProduction": true,
+      "pageSpeedDailyCap": "40",
+      "registration": "closed",
+      "invitationsEnabled": "false",
+      "retentionApproved": false
+    }
+  ],
+  "deployments": [
+    {
+      "service": "seo-beta-web",
+      "deployment": [
+        {
+          "id": "a12da525-ca42-40ed-b37a-92658302113f",
+          "status": "SUCCESS",
+          "image": "sha256:55ee6a75673611ece7b81c2673c88e09b1ee9d9b25fc1716baea0976f0619d79",
+          "message": "Unified candidate c1596d1 - beta web only",
+          "running": 1
+        }
+      ]
+    },
+    {
+      "service": "seo-beta-worker",
+      "deployment": [
+        {
+          "id": "5a2fa238-f901-40d8-abf8-70d8db3ce98e",
+          "status": "SUCCESS",
+          "image": "sha256:5f4ce60ce76ebe47091bf1d20c3e8665bd3355bd27d8691e83df2a0ee203b4fc",
+          "message": "Unified candidate c1596d1 - beta worker only",
+          "running": 1
+        }
+      ]
+    }
+  ]
+}

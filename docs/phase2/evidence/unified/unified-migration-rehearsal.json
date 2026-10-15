@@ -1,0 +1,24 @@
+{
+  "checkedAt": "2026-10-15T09:46:47.392Z",
+  "source": "verified actual Phase 1 production SQLite restore",
+  "sourceSha256": "8d0d70a0951c89fbea910c3215538189bdc89df1e6259646080ec7e4796ea707",
+  "counts": {
+    "pages": 94,
+    "sites": 4,
+    "audits": 4,
+    "checks": 220,
+    "issues": 354,
+    "google_accounts": 0,
+    "search_snapshots": 1,
+    "performance_results": 24,
+    "search_console_connections": 0
+  },
+  "fieldsCompared": 10646,
+  "fieldMismatches": 0,
+  "verifiedOwnerPreserved": true,
+  "administratorCount": 1,
+  "stagingTestAccountsCopied": 0,
+  "sessionsCopied": 0,
+  "googleTokensInProduction": 0,
+  "sqliteBackupUnchanged": true
+}

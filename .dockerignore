@@ -7,3 +7,11 @@ data
 .playwright-mcp
 *.log
 coverage
+
+.workflow-data
+.workflow-vitest
+*.db
+*.db-*
+*.sqlite*
+reports
+src/app/.well-known/workflow

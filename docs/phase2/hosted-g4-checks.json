@@ -1,0 +1,2005 @@
+{
+  "sourceRevision": "d31e13030c4cc76a1229ce6c8b3dea0e0ae3b714",
+  "sourceTree": "3a83a3fc5e8ffeb10ab1f57d9fd435aee8fb62df",
+  "scope": "Controlled internal G4 only; no external beta approval",
+  "hosted": {
+    "passed": 229,
+    "failed": 0,
+    "checks": [
+      {
+        "name": "G4 operator access",
+        "passed": true,
+        "utc": "2026-10-14T22:18:06.038644+00:00",
+        "status": 200,
+        "invitationsEnabled": true
+      },
+      {
+        "name": "A real invitation accepted by Resend",
+        "passed": true,
+        "utc": "2026-10-14T22:18:08.708681+00:00",
+        "status": 201,
+        "emailAccepted": true
+      },
+      {
+        "name": "A registration",
+        "passed": true,
+        "utc": "2026-10-14T22:18:10.749382+00:00",
+        "status": 200
+      },
+      {
+        "name": "A public signup blocked",
+        "passed": true,
+        "utc": "2026-10-14T22:18:10.998408+00:00",
+        "status": 404
+      },
+      {
+        "name": "A verification required despite manipulated registration fields",
+        "passed": true,
+        "utc": "2026-10-14T22:18:14.877348+00:00",
+        "emailVerified": false
+      },
+      {
+        "name": "B real invitation accepted by Resend",
+        "passed": true,
+        "utc": "2026-10-14T22:18:17.442442+00:00",
+        "status": 201,
+        "emailAccepted": true
+      },
+      {
+        "name": "B registration",
+        "passed": true,
+        "utc": "2026-10-14T22:18:19.581551+00:00",
+        "status": 200
+      },
+      {
+        "name": "B public signup blocked",
+        "passed": true,
+        "utc": "2026-10-14T22:18:19.875313+00:00",
+        "status": 404
+      },
+      {
+        "name": "B verification required despite manipulated registration fields",
+        "passed": true,
+        "utc": "2026-10-14T22:18:21.718223+00:00",
+        "emailVerified": false
+      },
+      {
+        "name": "A real email verification and no role escalation",
+        "passed": true,
+        "utc": "2026-10-14T22:32:40.323358+00:00",
+        "email_verified": true,
+        "admin_rows": 0,
+        "tenants": 1,
+        "consumed": 1
+      },
+      {
+        "name": "B real email verification and no role escalation",
+        "passed": true,
+        "utc": "2026-10-14T22:32:45.560839+00:00",
+        "email_verified": true,
+        "admin_rows": 0,
+        "tenants": 1,
+        "consumed": 1
+      },
+      {
+        "name": "Only operator and two approved invitations exist",
+        "passed": true,
+        "utc": "2026-10-14T22:30:03.847550+00:00",
+        "status": 200,
+        "count": 3
+      },
+      {
+        "name": "Anonymous GET /api/beta/admin/invitations denied",
+        "passed": true,
+        "utc": "2026-10-14T22:30:04.055670+00:00",
+        "status": 401
+      },
+      {
+        "name": "Anonymous POST /api/beta/admin/invitations denied",
+        "passed": true,
+        "utc": "2026-10-14T22:30:04.246324+00:00",
+        "status": 401
+      },
+      {
+        "name": "Anonymous GET /api/beta/websites denied",
+        "passed": true,
+        "utc": "2026-10-14T22:30:04.542232+00:00",
+        "status": 401
+      },
+      {
+        "name": "Anonymous GET /api/beta/audits denied",
+        "passed": true,
+        "utc": "2026-10-14T22:30:04.736543+00:00",
+        "status": 401
+      },
+      {
+        "name": "Anonymous GET /api/beta/auth/get-session denied",
+        "passed": true,
+        "utc": "2026-10-14T22:30:05.063486+00:00",
+        "status": 404
+      },
+      {
+        "name": "Anonymous POST /api/beta/auth/sign-up/email denied",
+        "passed": true,
+        "utc": "2026-10-14T22:30:05.294414+00:00",
+        "status": 404
+      },
+      {
+        "name": "Anonymous POST /api/beta/register denied",
+        "passed": true,
+        "utc": "2026-10-14T22:30:05.902612+00:00",
+        "status": 403
+      },
+      {
+        "name": "Administrator cross-origin invitation blocked https://evil.example",
+        "passed": true,
+        "utc": "2026-10-14T22:30:06.115013+00:00",
+        "status": 403
+      },
+      {
+        "name": "Administrator cross-origin invitation blocked null",
+        "passed": true,
+        "utc": "2026-10-14T22:30:06.285658+00:00",
+        "status": 403
+      },
+      {
+        "name": "Beta registration and resource controls preserved",
+        "passed": true,
+        "utc": "2026-10-14T22:30:10.189194+00:00",
+        "exactAllowlist": true,
+        "pageCap": "5",
+        "dailyPageSpeedCap": "40"
+      },
+      {
+        "name": "Phase 1 has no beta configuration",
+        "passed": true,
+        "utc": "2026-10-14T22:30:10.191628+00:00"
+      },
+      {
+        "name": "A login",
+        "passed": true,
+        "utc": "2026-10-14T22:32:41.835403+00:00",
+        "status": 200,
+        "secureHttpOnlyLax": true
+      },
+      {
+        "name": "A consumed invitation reuse denied",
+        "passed": true,
+        "utc": "2026-10-14T22:32:42.395117+00:00",
+        "status": 403
+      },
+      {
+        "name": "A admin API denied",
+        "passed": true,
+        "utc": "2026-10-14T22:32:43.628417+00:00",
+        "status": 404
+      },
+      {
+        "name": "B login",
+        "passed": true,
+        "utc": "2026-10-14T22:58:44.265561+00:00",
+        "status": 200,
+        "secureHttpOnlyLax": true
+      },
+      {
+        "name": "B consumed invitation reuse denied",
+        "passed": true,
+        "utc": "2026-10-14T22:32:47.378706+00:00",
+        "status": 403
+      },
+      {
+        "name": "B admin API denied",
+        "passed": true,
+        "utc": "2026-10-14T22:32:48.650279+00:00",
+        "status": 404
+      },
+      {
+        "name": "A independent website",
+        "passed": true,
+        "utc": "2026-10-14T22:33:05.439817+00:00",
+        "status": 201
+      },
+      {
+        "name": "B independent website",
+        "passed": true,
+        "utc": "2026-10-14T22:33:08.058814+00:00",
+        "status": 201
+      },
+      {
+        "name": "Same-domain websites use distinct rows",
+        "passed": true,
+        "utc": "2026-10-14T22:33:08.061226+00:00",
+        "distinctRows": true
+      },
+      {
+        "name": "A website list isolation",
+        "passed": true,
+        "utc": "2026-10-14T22:33:09.505821+00:00",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "name": "A start initial",
+        "passed": true,
+        "utc": "2026-10-14T22:33:13.067649+00:00",
+        "status": 202
+      },
+      {
+        "name": "B website list isolation",
+        "passed": true,
+        "utc": "2026-10-14T22:33:14.438505+00:00",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "name": "B start initial",
+        "passed": true,
+        "utc": "2026-10-14T22:33:18.186654+00:00",
+        "status": 202
+      },
+      {
+        "name": "A progress initial",
+        "passed": true,
+        "utc": "2026-10-14T22:33:38.668094+00:00",
+        "status": 200,
+        "auditState": "completed",
+        "stage": "Completed",
+        "progress": 100,
+        "attempts": 1
+      },
+      {
+        "name": "A terminal initial",
+        "passed": true,
+        "utc": "2026-10-14T22:33:38.671394+00:00",
+        "auditState": "completed",
+        "pagesScanned": 1,
+        "error": null
+      },
+      {
+        "name": "B progress initial",
+        "passed": true,
+        "utc": "2026-10-14T22:33:40.251920+00:00",
+        "status": 200,
+        "auditState": "completed",
+        "stage": "Completed",
+        "progress": 100,
+        "attempts": 1
+      },
+      {
+        "name": "B terminal initial",
+        "passed": true,
+        "utc": "2026-10-14T22:33:40.253321+00:00",
+        "auditState": "completed",
+        "pagesScanned": 1,
+        "error": null
+      },
+      {
+        "name": "A cannot access B GET /api/beta/websites/{id}",
+        "passed": true,
+        "utc": "2026-10-14T22:34:00.059781+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "A cannot access B PATCH /api/beta/websites/{id}",
+        "passed": true,
+        "utc": "2026-10-14T22:34:02.994299+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "A cannot access B DELETE /api/beta/websites/{id}",
+        "passed": true,
+        "utc": "2026-10-14T22:34:06.977773+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "A cannot access B GET /api/beta/audits/{id}",
+        "passed": true,
+        "utc": "2026-10-14T22:34:10.013916+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "A cannot access B GET /api/beta/audits/{id}/findings",
+        "passed": true,
+        "utc": "2026-10-14T22:34:13.064892+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "A cannot access B GET /api/beta/audits/{id}/fix?scope=all",
+        "passed": true,
+        "utc": "2026-10-14T22:34:16.002147+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "A cannot access B POST /api/beta/audits/{id}/cancel",
+        "passed": true,
+        "utc": "2026-10-14T22:34:18.880992+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "A cannot access B POST /api/beta/audits/{id}/pagespeed",
+        "passed": true,
+        "utc": "2026-10-14T22:34:22.023701+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "A cannot access B POST /api/beta/audits/{id}/ai",
+        "passed": true,
+        "utc": "2026-10-14T22:34:24.916685+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "A cannot access B GET /api/beta/audits/{id}/export?format=pdf",
+        "passed": true,
+        "utc": "2026-10-14T22:34:27.907525+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "A cannot access B GET /api/beta/audits/{id}/export?format=csv",
+        "passed": true,
+        "utc": "2026-10-14T22:34:30.903840+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "A cannot access B GET /api/beta/audits/{id}/export?format=json",
+        "passed": true,
+        "utc": "2026-10-14T22:34:33.843888+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "A cannot access B GET /api/beta/audits/{id}/export?format=md",
+        "passed": true,
+        "utc": "2026-10-14T22:34:36.705865+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "A cannot enqueue for B",
+        "passed": true,
+        "utc": "2026-10-14T22:34:38.796915+00:00",
+        "status": 404
+      },
+      {
+        "name": "A cannot compare with B",
+        "passed": true,
+        "utc": "2026-10-14T22:34:40.940415+00:00",
+        "status": 404
+      },
+      {
+        "name": "A cannot list B website history",
+        "passed": true,
+        "utc": "2026-10-14T22:34:42.516951+00:00",
+        "status": 404
+      },
+      {
+        "name": "B cannot access A GET /api/beta/websites/{id}",
+        "passed": true,
+        "utc": "2026-10-14T22:34:45.428254+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "B cannot access A PATCH /api/beta/websites/{id}",
+        "passed": true,
+        "utc": "2026-10-14T22:34:48.220818+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "B cannot access A DELETE /api/beta/websites/{id}",
+        "passed": true,
+        "utc": "2026-10-14T22:34:52.099275+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "B cannot access A GET /api/beta/audits/{id}",
+        "passed": true,
+        "utc": "2026-10-14T22:34:55.056326+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "B cannot access A GET /api/beta/audits/{id}/findings",
+        "passed": true,
+        "utc": "2026-10-14T22:34:58.032638+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "B cannot access A GET /api/beta/audits/{id}/fix?scope=all",
+        "passed": true,
+        "utc": "2026-10-14T22:35:00.887121+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "B cannot access A POST /api/beta/audits/{id}/cancel",
+        "passed": true,
+        "utc": "2026-10-14T22:35:03.981956+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "B cannot access A POST /api/beta/audits/{id}/pagespeed",
+        "passed": true,
+        "utc": "2026-10-14T22:35:07.178835+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "B cannot access A POST /api/beta/audits/{id}/ai",
+        "passed": true,
+        "utc": "2026-10-14T22:35:10.020462+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "B cannot access A GET /api/beta/audits/{id}/export?format=pdf",
+        "passed": true,
+        "utc": "2026-10-14T22:35:12.887123+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "B cannot access A GET /api/beta/audits/{id}/export?format=csv",
+        "passed": true,
+        "utc": "2026-10-14T22:35:15.713007+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "B cannot access A GET /api/beta/audits/{id}/export?format=json",
+        "passed": true,
+        "utc": "2026-10-14T22:35:18.468933+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "B cannot access A GET /api/beta/audits/{id}/export?format=md",
+        "passed": true,
+        "utc": "2026-10-14T22:35:21.389515+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "B cannot enqueue for A",
+        "passed": true,
+        "utc": "2026-10-14T22:35:23.439541+00:00",
+        "status": 404
+      },
+      {
+        "name": "B cannot compare with A",
+        "passed": true,
+        "utc": "2026-10-14T22:35:25.527663+00:00",
+        "status": 404
+      },
+      {
+        "name": "B cannot list A website history",
+        "passed": true,
+        "utc": "2026-10-14T22:35:27.055830+00:00",
+        "status": 404
+      },
+      {
+        "name": "operator cannot access A GET /api/beta/websites/{id}",
+        "passed": true,
+        "utc": "2026-10-14T22:35:29.953902+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "operator cannot access A PATCH /api/beta/websites/{id}",
+        "passed": true,
+        "utc": "2026-10-14T22:35:32.961552+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "operator cannot access A DELETE /api/beta/websites/{id}",
+        "passed": true,
+        "utc": "2026-10-14T22:35:36.754803+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "operator cannot access A GET /api/beta/audits/{id}",
+        "passed": true,
+        "utc": "2026-10-14T22:35:39.716821+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "operator cannot access A GET /api/beta/audits/{id}/findings",
+        "passed": true,
+        "utc": "2026-10-14T22:35:42.557348+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "operator cannot access A GET /api/beta/audits/{id}/fix?scope=all",
+        "passed": true,
+        "utc": "2026-10-14T22:35:45.343892+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "operator cannot access A POST /api/beta/audits/{id}/cancel",
+        "passed": true,
+        "utc": "2026-10-14T22:35:48.108253+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "operator cannot access A POST /api/beta/audits/{id}/pagespeed",
+        "passed": true,
+        "utc": "2026-10-14T22:35:51.270801+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "operator cannot access A POST /api/beta/audits/{id}/ai",
+        "passed": true,
+        "utc": "2026-10-14T22:35:54.050430+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "operator cannot access A GET /api/beta/audits/{id}/export?format=pdf",
+        "passed": true,
+        "utc": "2026-10-14T22:35:56.922951+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "operator cannot access A GET /api/beta/audits/{id}/export?format=csv",
+        "passed": true,
+        "utc": "2026-10-14T22:35:59.869195+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "operator cannot access A GET /api/beta/audits/{id}/export?format=json",
+        "passed": true,
+        "utc": "2026-10-14T22:36:02.911461+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "operator cannot access A GET /api/beta/audits/{id}/export?format=md",
+        "passed": true,
+        "utc": "2026-10-14T22:36:05.654374+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "operator cannot enqueue for A",
+        "passed": true,
+        "utc": "2026-10-14T22:36:07.925184+00:00",
+        "status": 404
+      },
+      {
+        "name": "operator cannot compare with A",
+        "passed": true,
+        "utc": "2026-10-14T22:36:09.282168+00:00",
+        "status": 404
+      },
+      {
+        "name": "operator cannot list A website history",
+        "passed": true,
+        "utc": "2026-10-14T22:36:10.820358+00:00",
+        "status": 404
+      },
+      {
+        "name": "operator cannot access B GET /api/beta/websites/{id}",
+        "passed": true,
+        "utc": "2026-10-14T22:36:13.652529+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "operator cannot access B PATCH /api/beta/websites/{id}",
+        "passed": true,
+        "utc": "2026-10-14T22:36:16.632522+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "operator cannot access B DELETE /api/beta/websites/{id}",
+        "passed": true,
+        "utc": "2026-10-14T22:36:20.466817+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "operator cannot access B GET /api/beta/audits/{id}",
+        "passed": true,
+        "utc": "2026-10-14T22:36:23.228744+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "operator cannot access B GET /api/beta/audits/{id}/findings",
+        "passed": true,
+        "utc": "2026-10-14T22:36:26.081183+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "operator cannot access B GET /api/beta/audits/{id}/fix?scope=all",
+        "passed": true,
+        "utc": "2026-10-14T22:36:28.857775+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "operator cannot access B POST /api/beta/audits/{id}/cancel",
+        "passed": true,
+        "utc": "2026-10-14T22:36:31.607688+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "operator cannot access B POST /api/beta/audits/{id}/pagespeed",
+        "passed": true,
+        "utc": "2026-10-14T22:36:35.149563+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "operator cannot access B POST /api/beta/audits/{id}/ai",
+        "passed": true,
+        "utc": "2026-10-14T22:36:37.933507+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "operator cannot access B GET /api/beta/audits/{id}/export?format=pdf",
+        "passed": true,
+        "utc": "2026-10-14T22:36:40.746323+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "operator cannot access B GET /api/beta/audits/{id}/export?format=csv",
+        "passed": true,
+        "utc": "2026-10-14T22:36:43.544709+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "operator cannot access B GET /api/beta/audits/{id}/export?format=json",
+        "passed": true,
+        "utc": "2026-10-14T22:36:46.350693+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "operator cannot access B GET /api/beta/audits/{id}/export?format=md",
+        "passed": true,
+        "utc": "2026-10-14T22:36:49.104800+00:00",
+        "status": 404,
+        "missingStatus": 404,
+        "identicalMissingBody": true
+      },
+      {
+        "name": "operator cannot enqueue for B",
+        "passed": true,
+        "utc": "2026-10-14T22:36:51.187083+00:00",
+        "status": 404
+      },
+      {
+        "name": "operator cannot compare with B",
+        "passed": true,
+        "utc": "2026-10-14T22:36:52.562992+00:00",
+        "status": 404
+      },
+      {
+        "name": "operator cannot list B website history",
+        "passed": true,
+        "utc": "2026-10-14T22:36:54.146613+00:00",
+        "status": 404
+      },
+      {
+        "name": "A rejects manipulated audits ID 0",
+        "passed": true,
+        "utc": "2026-10-14T22:36:55.153481+00:00",
+        "status": 404
+      },
+      {
+        "name": "A rejects manipulated websites ID 0",
+        "passed": true,
+        "utc": "2026-10-14T22:36:56.220883+00:00",
+        "status": 404
+      },
+      {
+        "name": "A rejects manipulated audits ID -1",
+        "passed": true,
+        "utc": "2026-10-14T22:36:57.236799+00:00",
+        "status": 404
+      },
+      {
+        "name": "A rejects manipulated websites ID -1",
+        "passed": true,
+        "utc": "2026-10-14T22:36:58.279385+00:00",
+        "status": 404
+      },
+      {
+        "name": "A rejects manipulated audits ID 1e3",
+        "passed": true,
+        "utc": "2026-10-14T22:36:59.344096+00:00",
+        "status": 404
+      },
+      {
+        "name": "A rejects manipulated websites ID 1e3",
+        "passed": true,
+        "utc": "2026-10-14T22:37:00.401168+00:00",
+        "status": 404
+      },
+      {
+        "name": "A rejects manipulated audits ID 0x10",
+        "passed": true,
+        "utc": "2026-10-14T22:37:01.467617+00:00",
+        "status": 404
+      },
+      {
+        "name": "A rejects manipulated websites ID 0x10",
+        "passed": true,
+        "utc": "2026-10-14T22:37:02.471294+00:00",
+        "status": 404
+      },
+      {
+        "name": "A rejects manipulated audits ID 2147483648",
+        "passed": true,
+        "utc": "2026-10-14T22:37:03.506446+00:00",
+        "status": 404
+      },
+      {
+        "name": "A rejects manipulated websites ID 2147483648",
+        "passed": true,
+        "utc": "2026-10-14T22:37:04.555542+00:00",
+        "status": 404
+      },
+      {
+        "name": "A rejects manipulated audits ID 9999999999",
+        "passed": true,
+        "utc": "2026-10-14T22:37:05.633294+00:00",
+        "status": 404
+      },
+      {
+        "name": "A rejects manipulated websites ID 9999999999",
+        "passed": true,
+        "utc": "2026-10-14T22:37:06.667921+00:00",
+        "status": 404
+      },
+      {
+        "name": "A rejects manipulated audits ID 1%20OR%201%3D1",
+        "passed": true,
+        "utc": "2026-10-14T22:37:07.737438+00:00",
+        "status": 404
+      },
+      {
+        "name": "A rejects manipulated websites ID 1%20OR%201%3D1",
+        "passed": true,
+        "utc": "2026-10-14T22:37:08.746121+00:00",
+        "status": 404
+      },
+      {
+        "name": "A legacy API denied",
+        "passed": true,
+        "utc": "2026-10-14T22:37:08.942231+00:00",
+        "status": 401
+      },
+      {
+        "name": "A cannot issue admin invitations",
+        "passed": true,
+        "utc": "2026-10-14T22:37:10.142295+00:00",
+        "status": 404
+      },
+      {
+        "name": "A metadata SSRF denied",
+        "passed": true,
+        "utc": "2026-10-14T22:37:11.453303+00:00",
+        "status": 400
+      },
+      {
+        "name": "B rejects manipulated audits ID 0",
+        "passed": true,
+        "utc": "2026-10-14T22:37:12.466823+00:00",
+        "status": 404
+      },
+      {
+        "name": "B rejects manipulated websites ID 0",
+        "passed": true,
+        "utc": "2026-10-14T22:37:13.499165+00:00",
+        "status": 404
+      },
+      {
+        "name": "B rejects manipulated audits ID -1",
+        "passed": true,
+        "utc": "2026-10-14T22:37:14.565525+00:00",
+        "status": 404
+      },
+      {
+        "name": "B rejects manipulated websites ID -1",
+        "passed": true,
+        "utc": "2026-10-14T22:37:15.604654+00:00",
+        "status": 404
+      },
+      {
+        "name": "B rejects manipulated audits ID 1e3",
+        "passed": true,
+        "utc": "2026-10-14T22:37:16.651977+00:00",
+        "status": 404
+      },
+      {
+        "name": "B rejects manipulated websites ID 1e3",
+        "passed": true,
+        "utc": "2026-10-14T22:37:17.719357+00:00",
+        "status": 404
+      },
+      {
+        "name": "B rejects manipulated audits ID 0x10",
+        "passed": true,
+        "utc": "2026-10-14T22:37:18.791443+00:00",
+        "status": 404
+      },
+      {
+        "name": "B rejects manipulated websites ID 0x10",
+        "passed": true,
+        "utc": "2026-10-14T22:37:19.867283+00:00",
+        "status": 404
+      },
+      {
+        "name": "B rejects manipulated audits ID 2147483648",
+        "passed": true,
+        "utc": "2026-10-14T22:37:20.929006+00:00",
+        "status": 404
+      },
+      {
+        "name": "B rejects manipulated websites ID 2147483648",
+        "passed": true,
+        "utc": "2026-10-14T22:37:21.983103+00:00",
+        "status": 404
+      },
+      {
+        "name": "B rejects manipulated audits ID 9999999999",
+        "passed": true,
+        "utc": "2026-10-14T22:37:23.039897+00:00",
+        "status": 404
+      },
+      {
+        "name": "B rejects manipulated websites ID 9999999999",
+        "passed": true,
+        "utc": "2026-10-14T22:37:24.088682+00:00",
+        "status": 404
+      },
+      {
+        "name": "B rejects manipulated audits ID 1%20OR%201%3D1",
+        "passed": true,
+        "utc": "2026-10-14T22:37:25.123401+00:00",
+        "status": 404
+      },
+      {
+        "name": "B rejects manipulated websites ID 1%20OR%201%3D1",
+        "passed": true,
+        "utc": "2026-10-14T22:37:26.160616+00:00",
+        "status": 404
+      },
+      {
+        "name": "B legacy API denied",
+        "passed": true,
+        "utc": "2026-10-14T22:37:26.395535+00:00",
+        "status": 401
+      },
+      {
+        "name": "B cannot issue admin invitations",
+        "passed": true,
+        "utc": "2026-10-14T22:37:27.626900+00:00",
+        "status": 404
+      },
+      {
+        "name": "B metadata SSRF denied",
+        "passed": true,
+        "utc": "2026-10-14T22:37:28.879403+00:00",
+        "status": 400
+      },
+      {
+        "name": "A export pdf",
+        "passed": true,
+        "utc": "2026-10-14T22:39:16.757292+00:00",
+        "status": 200,
+        "bytes": 27875,
+        "privateNoStore": true,
+        "sha256": "e6e1fb52b0464e1df8ba4d25c318a3d5b74ffa9f2b071a026ca907165885a349"
+      },
+      {
+        "name": "A export csv",
+        "passed": true,
+        "utc": "2026-10-14T22:39:18.738837+00:00",
+        "status": 200,
+        "bytes": 16732,
+        "privateNoStore": true,
+        "sha256": "bfbfe24466f946fd26e71f591bc4a24b7faa1f7feafa3029b1d97b36ae3f4068"
+      },
+      {
+        "name": "A export json",
+        "passed": true,
+        "utc": "2026-10-14T22:39:20.723865+00:00",
+        "status": 200,
+        "bytes": 59188,
+        "privateNoStore": true,
+        "sha256": "0834c702883c1e569956eaeb1aaa35b6b6bcef6faec05f49337f2cbd9010c7fd"
+      },
+      {
+        "name": "A export md",
+        "passed": true,
+        "utc": "2026-10-14T22:39:22.756956+00:00",
+        "status": 200,
+        "bytes": 21784,
+        "privateNoStore": true,
+        "sha256": "040d6481ad087d6e2fc37571d39f6e5a5f8f482ec3cbdd3045e116f9c35c1c56"
+      },
+      {
+        "name": "A Fix with AI",
+        "passed": true,
+        "utc": "2026-10-14T22:39:24.511863+00:00",
+        "status": 200,
+        "bytes": 27740,
+        "privateNoStore": true
+      },
+      {
+        "name": "A history isolation",
+        "passed": true,
+        "utc": "2026-10-14T22:39:25.924916+00:00",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "name": "B export pdf",
+        "passed": true,
+        "utc": "2026-10-14T22:39:27.949382+00:00",
+        "status": 200,
+        "bytes": 27875,
+        "privateNoStore": true,
+        "sha256": "2df2290d2af557999f7711d03f2ff2e98d69172f59d017022b8bdd969e04bb46"
+      },
+      {
+        "name": "B export csv",
+        "passed": true,
+        "utc": "2026-10-14T22:39:29.874452+00:00",
+        "status": 200,
+        "bytes": 16732,
+        "privateNoStore": true,
+        "sha256": "bfbfe24466f946fd26e71f591bc4a24b7faa1f7feafa3029b1d97b36ae3f4068"
+      },
+      {
+        "name": "B export json",
+        "passed": true,
+        "utc": "2026-10-14T22:39:31.896650+00:00",
+        "status": 200,
+        "bytes": 59188,
+        "privateNoStore": true,
+        "sha256": "b5142543bd052ac2416e283671d7fbe201cac60a9a8bb08e00cbf6894833a4a8"
+      },
+      {
+        "name": "B export md",
+        "passed": true,
+        "utc": "2026-10-14T22:39:33.789988+00:00",
+        "status": 200,
+        "bytes": 21784,
+        "privateNoStore": true,
+        "sha256": "040d6481ad087d6e2fc37571d39f6e5a5f8f482ec3cbdd3045e116f9c35c1c56"
+      },
+      {
+        "name": "B Fix with AI",
+        "passed": true,
+        "utc": "2026-10-14T22:39:35.522379+00:00",
+        "status": 200,
+        "bytes": 27740,
+        "privateNoStore": true
+      },
+      {
+        "name": "B history isolation",
+        "passed": true,
+        "utc": "2026-10-14T22:39:36.986750+00:00",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "name": "A website quota enforced",
+        "passed": true,
+        "utc": "2026-10-14T22:39:56.147025+00:00",
+        "status": 409
+      },
+      {
+        "name": "B website allowance independent from A",
+        "passed": true,
+        "utc": "2026-10-14T22:39:58.580708+00:00",
+        "status": 201
+      },
+      {
+        "name": "Temporary B quota-probe website removed",
+        "passed": true,
+        "utc": "2026-10-14T22:40:00.970117+00:00",
+        "status": 200
+      },
+      {
+        "name": "A audit quota denies additional scan",
+        "passed": true,
+        "utc": "2026-10-14T22:40:14.652146+00:00",
+        "status": 409
+      },
+      {
+        "name": "B start comparison",
+        "passed": true,
+        "utc": "2026-10-14T22:40:18.312328+00:00",
+        "status": 202
+      },
+      {
+        "name": "Denied A request does not spend quota",
+        "passed": true,
+        "utc": "2026-10-14T22:40:20.314283+00:00",
+        "before": 1,
+        "after": 1
+      },
+      {
+        "name": "B has independent audit allowance while A is capped",
+        "passed": true,
+        "utc": "2026-10-14T22:40:22.228235+00:00",
+        "beforeB": 1,
+        "afterB": 2,
+        "unchangedA": 1
+      },
+      {
+        "name": "A start comparison",
+        "passed": true,
+        "utc": "2026-10-14T22:40:27.661057+00:00",
+        "status": 202
+      },
+      {
+        "name": "A progress comparison",
+        "passed": true,
+        "utc": "2026-10-14T22:40:44.578968+00:00",
+        "status": 200,
+        "auditState": "completed",
+        "stage": "Completed",
+        "progress": 100,
+        "attempts": 1
+      },
+      {
+        "name": "B progress comparison",
+        "passed": true,
+        "utc": "2026-10-14T22:40:30.765049+00:00",
+        "status": 200,
+        "auditState": "completed",
+        "stage": "Completed",
+        "progress": 100,
+        "attempts": 1
+      },
+      {
+        "name": "B terminal comparison",
+        "passed": true,
+        "utc": "2026-10-14T22:40:30.768365+00:00",
+        "auditState": "completed",
+        "pagesScanned": 1,
+        "error": null
+      },
+      {
+        "name": "A terminal comparison",
+        "passed": true,
+        "utc": "2026-10-14T22:40:44.584428+00:00",
+        "auditState": "completed",
+        "pagesScanned": 1,
+        "error": null
+      },
+      {
+        "name": "A same-site audit comparison",
+        "passed": true,
+        "utc": "2026-10-14T22:40:47.168766+00:00",
+        "status": 200
+      },
+      {
+        "name": "B same-site audit comparison",
+        "passed": true,
+        "utc": "2026-10-14T22:40:49.126934+00:00",
+        "status": 200
+      },
+      {
+        "name": "Suspended A denied /api/beta/websites",
+        "passed": true,
+        "utc": "2026-10-14T22:40:53.900991+00:00",
+        "status": 401
+      },
+      {
+        "name": "Suspended A denied /api/beta/audits",
+        "passed": true,
+        "utc": "2026-10-14T22:40:55.014907+00:00",
+        "status": 401
+      },
+      {
+        "name": "Suspended A denied /api/beta/audits/1",
+        "passed": true,
+        "utc": "2026-10-14T22:40:56.039487+00:00",
+        "status": 401
+      },
+      {
+        "name": "Suspended A denied /api/beta/audits/1/export?format=json",
+        "passed": true,
+        "utc": "2026-10-14T22:40:57.065917+00:00",
+        "status": 401
+      },
+      {
+        "name": "Suspended A denied /api/beta/audits/1/fix",
+        "passed": true,
+        "utc": "2026-10-14T22:40:58.137575+00:00",
+        "status": 401
+      },
+      {
+        "name": "Suspended A cannot enqueue",
+        "passed": true,
+        "utc": "2026-10-14T22:40:59.214891+00:00",
+        "status": 401
+      },
+      {
+        "name": "A suspension does not block B",
+        "passed": true,
+        "utc": "2026-10-14T22:41:00.642573+00:00",
+        "status": 200
+      },
+      {
+        "name": "A suspension does not block administrator",
+        "passed": true,
+        "utc": "2026-10-14T22:41:02.032257+00:00",
+        "status": 200
+      },
+      {
+        "name": "A access restored after suspension test",
+        "passed": true,
+        "utc": "2026-10-14T22:41:05.367823+00:00",
+        "status": 200
+      },
+      {
+        "name": "A cannot revoke B session",
+        "passed": true,
+        "utc": "2026-10-14T22:41:08.518643+00:00",
+        "status": 404
+      },
+      {
+        "name": "B cannot revoke A session",
+        "passed": true,
+        "utc": "2026-10-14T22:41:11.661032+00:00",
+        "status": 404
+      },
+      {
+        "name": "operator cannot revoke A session",
+        "passed": true,
+        "utc": "2026-10-14T22:41:14.845890+00:00",
+        "status": 404
+      },
+      {
+        "name": "A optional AI consultant safely unavailable",
+        "passed": true,
+        "utc": "2026-10-14T22:41:16.394842+00:00",
+        "status": 503
+      },
+      {
+        "name": "A admin page reveals no invitation UI",
+        "passed": true,
+        "utc": "2026-10-14T22:41:17.959490+00:00",
+        "status": 200
+      },
+      {
+        "name": "A dashboard excludes other account label",
+        "passed": true,
+        "utc": "2026-10-14T22:41:20.618390+00:00",
+        "status": 200
+      },
+      {
+        "name": "A foreign audit page denied ",
+        "passed": true,
+        "utc": "2026-10-14T22:41:22.520361+00:00",
+        "status": 200
+      },
+      {
+        "name": "A foreign audit page denied /findings",
+        "passed": true,
+        "utc": "2026-10-14T22:41:24.610108+00:00",
+        "status": 200
+      },
+      {
+        "name": "A foreign audit page denied /fix",
+        "passed": true,
+        "utc": "2026-10-14T22:41:26.556202+00:00",
+        "status": 200
+      },
+      {
+        "name": "B optional AI consultant safely unavailable",
+        "passed": true,
+        "utc": "2026-10-14T22:41:28.238417+00:00",
+        "status": 503
+      },
+      {
+        "name": "B admin page reveals no invitation UI",
+        "passed": true,
+        "utc": "2026-10-14T22:41:29.811476+00:00",
+        "status": 200
+      },
+      {
+        "name": "B dashboard excludes other account label",
+        "passed": true,
+        "utc": "2026-10-14T22:41:31.723872+00:00",
+        "status": 200
+      },
+      {
+        "name": "B foreign audit page denied ",
+        "passed": true,
+        "utc": "2026-10-14T22:41:33.643403+00:00",
+        "status": 200
+      },
+      {
+        "name": "B foreign audit page denied /findings",
+        "passed": true,
+        "utc": "2026-10-14T22:41:35.578432+00:00",
+        "status": 200
+      },
+      {
+        "name": "B foreign audit page denied /fix",
+        "passed": true,
+        "utc": "2026-10-14T22:41:37.473677+00:00",
+        "status": 200
+      },
+      {
+        "name": "A start queuedCancel",
+        "passed": true,
+        "utc": "2026-10-14T22:43:11.565728+00:00",
+        "status": 202
+      },
+      {
+        "name": "Worker outage leaves admitted audit queued",
+        "passed": true,
+        "utc": "2026-10-14T22:43:15.261499+00:00",
+        "jobState": "queued",
+        "attempts": 0
+      },
+      {
+        "name": "Queued cancellation refunds unused audit allowance",
+        "passed": true,
+        "utc": "2026-10-14T22:43:19.624879+00:00",
+        "status": 200,
+        "before": 2,
+        "after": 2
+      },
+      {
+        "name": "A start suspendedQueue",
+        "passed": true,
+        "utc": "2026-10-14T22:43:24.884678+00:00",
+        "status": 202
+      },
+      {
+        "name": "B start expiredLease",
+        "passed": true,
+        "utc": "2026-10-14T22:43:30.212696+00:00",
+        "status": 202
+      },
+      {
+        "name": "Synthetic dead-worker lease staged",
+        "passed": true,
+        "utc": "2026-10-14T22:43:39.701118+00:00"
+      },
+      {
+        "name": "Beta web stays usable while worker is down",
+        "passed": true,
+        "utc": "2026-10-14T22:43:41.079812+00:00",
+        "status": 200
+      },
+      {
+        "name": "Beta readiness stays healthy while worker is down",
+        "passed": true,
+        "utc": "2026-10-14T22:43:41.475541+00:00",
+        "status": 200
+      },
+      {
+        "name": "Worker skips suspended tenant queued job",
+        "passed": true,
+        "utc": "2026-10-14T22:46:29.245723+00:00",
+        "jobState": "queued",
+        "attempts": 0
+      },
+      {
+        "name": "A progress suspendedQueue",
+        "passed": true,
+        "utc": "2026-10-14T22:46:49.632182+00:00",
+        "status": 200,
+        "auditState": "completed",
+        "stage": "Completed",
+        "progress": 100,
+        "attempts": 1
+      },
+      {
+        "name": "A terminal suspendedQueue",
+        "passed": true,
+        "utc": "2026-10-14T22:46:49.634245+00:00",
+        "auditState": "completed",
+        "pagesScanned": 1,
+        "error": null
+      },
+      {
+        "name": "B progress expiredLease",
+        "passed": true,
+        "utc": "2026-10-14T22:46:51.207059+00:00",
+        "status": 200,
+        "auditState": "completed",
+        "stage": "Completed",
+        "progress": 100,
+        "attempts": 2
+      },
+      {
+        "name": "B terminal expiredLease",
+        "passed": true,
+        "utc": "2026-10-14T22:46:51.211383+00:00",
+        "auditState": "completed",
+        "pagesScanned": 1,
+        "error": null
+      },
+      {
+        "name": "Deployed worker recovers synthetic expired lease",
+        "passed": true,
+        "utc": "2026-10-14T22:46:54.966057+00:00",
+        "jobState": "completed",
+        "attempts": 2,
+        "higherFence": true
+      },
+      {
+        "name": "A start retryFault",
+        "passed": true,
+        "utc": "2026-10-14T22:48:44.363013+00:00",
+        "status": 202
+      },
+      {
+        "name": "Bounded retry limit under result-write failure",
+        "passed": true,
+        "utc": "2026-10-14T22:51:20.331642+00:00",
+        "terminalState": "failed",
+        "attempts": 3,
+        "states": [
+          [
+            "queued",
+            0
+          ],
+          [
+            "running",
+            1
+          ],
+          [
+            "queued",
+            1
+          ],
+          [
+            "running",
+            2
+          ],
+          [
+            "queued",
+            2
+          ],
+          [
+            "running",
+            3
+          ],
+          [
+            "failed",
+            3
+          ]
+        ]
+      },
+      {
+        "name": "Worker failure is sanitized",
+        "passed": true,
+        "utc": "2026-10-14T22:51:20.336619+00:00",
+        "genericError": "The audit failed unexpectedly. It is retried automatically a limited number of times."
+      },
+      {
+        "name": "Worker restart hands back the active lease without spending an attempt",
+        "passed": true,
+        "utc": "2026-10-14T22:53:34.268147+00:00",
+        "finalAttempts": 3,
+        "finalFence": 4,
+        "restartWhileRunning": true,
+        "assertion": "Each claim increments fence; graceful handback decrements attempts without incrementing fence"
+      },
+      {
+        "name": "Failed result transactions leave no partial report rows",
+        "passed": true,
+        "utc": "2026-10-14T22:51:28.631793+00:00",
+        "pages": 0,
+        "checks": 0,
+        "issues": 0
+      },
+      {
+        "name": "Failed audit cannot produce a success export",
+        "passed": true,
+        "utc": "2026-10-14T22:51:30.025635+00:00",
+        "status": 409
+      },
+      {
+        "name": "Zero PageSpeed allowance blocks provider usage during fault retries",
+        "passed": true,
+        "utc": "2026-10-14T22:51:31.935816+00:00",
+        "before": 3,
+        "after": 3
+      },
+      {
+        "name": "A start runningCancel",
+        "passed": true,
+        "utc": "2026-10-14T22:53:56.418848+00:00",
+        "status": 202
+      },
+      {
+        "name": "Running cancellation request accepted",
+        "passed": true,
+        "utc": "2026-10-14T22:54:00.360327+00:00",
+        "status": 200
+      },
+      {
+        "name": "Running worker stops and marks audit cancelled",
+        "passed": true,
+        "utc": "2026-10-14T22:54:09.649730+00:00",
+        "terminalState": "cancelled"
+      },
+      {
+        "name": "Started cancelled scan retains its used allowance",
+        "passed": true,
+        "utc": "2026-10-14T22:54:11.492341+00:00",
+        "before": 4,
+        "after": 5
+      },
+      {
+        "name": "Default monthly cap enforced after controlled workload",
+        "passed": true,
+        "utc": "2026-10-14T22:55:31.049030+00:00",
+        "status": 409,
+        "quotaReason": "Monthly audit limit reached."
+      },
+      {
+        "name": "Real foreign tenant/user IDs in body cannot change website ownership",
+        "passed": true,
+        "utc": "2026-10-14T22:55:20.836351+00:00",
+        "status": 200,
+        "ownWebsiteReturned": true
+      },
+      {
+        "name": "A foreign tenant query cannot change history scope",
+        "passed": true,
+        "utc": "2026-10-14T22:55:22.211459+00:00",
+        "status": 200,
+        "onlyOwnedAudits": true
+      },
+      {
+        "name": "A foreign tenant query cannot change export scope",
+        "passed": true,
+        "utc": "2026-10-14T22:55:24.858327+00:00",
+        "status": 200,
+        "ownAuditReturned": true
+      },
+      {
+        "name": "A report URL is unusable without a session",
+        "passed": true,
+        "utc": "2026-10-14T22:55:25.041079+00:00",
+        "status": 401
+      },
+      {
+        "name": "B foreign tenant query cannot change history scope",
+        "passed": true,
+        "utc": "2026-10-14T22:55:26.440615+00:00",
+        "status": 200,
+        "onlyOwnedAudits": true
+      },
+      {
+        "name": "B foreign tenant query cannot change export scope",
+        "passed": true,
+        "utc": "2026-10-14T22:55:28.366429+00:00",
+        "status": 200,
+        "ownAuditReturned": true
+      },
+      {
+        "name": "B report URL is unusable without a session",
+        "passed": true,
+        "utc": "2026-10-14T22:55:28.567076+00:00",
+        "status": 401
+      },
+      {
+        "name": "A logout",
+        "passed": true,
+        "utc": "2026-10-14T22:55:43.908458+00:00",
+        "status": 200
+      },
+      {
+        "name": "A old session cookie refused",
+        "passed": true,
+        "utc": "2026-10-14T22:55:44.330992+00:00",
+        "status": 401
+      },
+      {
+        "name": "B logout",
+        "passed": true,
+        "utc": "2026-10-14T22:59:19.939490+00:00",
+        "status": 200
+      },
+      {
+        "name": "B old session cookie refused",
+        "passed": true,
+        "utc": "2026-10-14T22:59:20.347452+00:00",
+        "status": 401
+      },
+      {
+        "name": "B start postFailure",
+        "passed": true,
+        "utc": "2026-10-14T22:58:47.593322+00:00",
+        "status": 202
+      },
+      {
+        "name": "Per-account concurrency admission blocks a second scan",
+        "passed": true,
+        "utc": "2026-10-14T22:58:49.785844+00:00",
+        "status": 409,
+        "reason": "An audit is already active for this account."
+      },
+      {
+        "name": "B progress postFailure",
+        "passed": true,
+        "utc": "2026-10-14T22:59:05.022786+00:00",
+        "status": 200,
+        "auditState": "completed",
+        "stage": "Completed",
+        "progress": 100,
+        "attempts": 1
+      },
+      {
+        "name": "B terminal postFailure",
+        "passed": true,
+        "utc": "2026-10-14T22:59:05.029085+00:00",
+        "auditState": "completed",
+        "pagesScanned": 1,
+        "error": null
+      }
+    ]
+  },
+  "browser": {
+    "passed": 25,
+    "failed": 0,
+    "checks": [
+      {
+        "name": "Anonymous browser login form",
+        "passed": true
+      },
+      {
+        "name": "A browser login form",
+        "passed": true
+      },
+      {
+        "name": "A browser dashboard isolation",
+        "passed": true
+      },
+      {
+        "name": "A browser completed results",
+        "passed": true
+      },
+      {
+        "name": "A browser download pdf",
+        "passed": true,
+        "bytes": 27875
+      },
+      {
+        "name": "A browser download json",
+        "passed": true,
+        "bytes": 59188
+      },
+      {
+        "name": "A browser download csv",
+        "passed": true,
+        "bytes": 16732
+      },
+      {
+        "name": "A browser download md",
+        "passed": true,
+        "bytes": 21784
+      },
+      {
+        "name": "A browser Fix with AI",
+        "passed": true
+      },
+      {
+        "name": "A browser foreign audit denied",
+        "passed": true
+      },
+      {
+        "name": "A browser admin page denied",
+        "passed": true
+      },
+      {
+        "name": "A browser logout",
+        "passed": true
+      },
+      {
+        "name": "A browser runtime errors absent",
+        "passed": true,
+        "errorCount": 0
+      },
+      {
+        "name": "B browser login form",
+        "passed": true
+      },
+      {
+        "name": "B browser dashboard isolation",
+        "passed": true
+      },
+      {
+        "name": "B browser completed results",
+        "passed": true
+      },
+      {
+        "name": "B browser download pdf",
+        "passed": true,
+        "bytes": 27875
+      },
+      {
+        "name": "B browser download json",
+        "passed": true,
+        "bytes": 59188
+      },
+      {
+        "name": "B browser download csv",
+        "passed": true,
+        "bytes": 16732
+      },
+      {
+        "name": "B browser download md",
+        "passed": true,
+        "bytes": 21784
+      },
+      {
+        "name": "B browser Fix with AI",
+        "passed": true
+      },
+      {
+        "name": "B browser foreign audit denied",
+        "passed": true
+      },
+      {
+        "name": "B browser admin page denied",
+        "passed": true
+      },
+      {
+        "name": "B browser logout",
+        "passed": true
+      },
+      {
+        "name": "B browser runtime errors absent",
+        "passed": true,
+        "errorCount": 0
+      }
+    ]
+  },
+  "pdfValidation": [
+    {
+      "account": "A",
+      "pdfParses": true,
+      "correctAuditInPdf": true,
+      "textCharacters": 27496
+    },
+    {
+      "account": "B",
+      "pdfParses": true,
+      "correctAuditInPdf": true,
+      "textCharacters": 27496
+    }
+  ],
+  "usage": [
+    {
+      "account": "A",
+      "usage": [
+        {
+          "kind": "audit",
+          "units": 5
+        },
+        {
+          "kind": "pagespeed",
+          "units": 4
+        }
+      ],
+      "auditCount": 6,
+      "pagesWithinCap": true,
+      "websiteIds": [
+        1
+      ]
+    },
+    {
+      "account": "B",
+      "usage": [
+        {
+          "kind": "audit",
+          "units": 4
+        },
+        {
+          "kind": "pagespeed",
+          "units": 4
+        }
+      ],
+      "auditCount": 4,
+      "pagesWithinCap": true,
+      "websiteIds": [
+        2
+      ]
+    }
+  ],
+  "infrastructure": {
+    "seo-beta-web": [
+      {
+        "id": "b83ab02c-7915-4f98-809d-b1ef8dc73c8a",
+        "status": "SUCCESS",
+        "createdAt": "2026-10-14T22:22:33.048Z",
+        "imageDigest": "sha256:d274d9beff49eec30e995794f7133b43d4a67556c411cd7f92181beeeeaa87df",
+        "message": "Controlled G4 fixes d31e130"
+      },
+      {
+        "id": "4c49f3db-58cc-45f9-b519-9bfc93b4e870",
+        "status": "REMOVED",
+        "createdAt": "2026-10-14T22:16:02.248Z",
+        "imageDigest": "sha256:39ffdfab98beb61dec6350386d8f46f2491c73c579114697185c5079a8e7519f",
+        "message": "Controlled G4 baseline 0d181a3"
+      }
+    ],
+    "seo-beta-worker": [
+      {
+        "id": "f7e8de3c-9d93-4ebf-9dac-580dba4306ae",
+        "status": "SUCCESS",
+        "createdAt": "2026-10-14T22:45:11.072Z",
+        "imageDigest": "sha256:2cc60ad5c4ddf5679df3469230d1333e0b00de6e190ea2fecb3e4de5ec96d375",
+        "message": "Controlled G4 fixes d31e130"
+      },
+      {
+        "id": "86f20b68-1a42-4a4d-93c3-482b4c044e25",
+        "status": "REMOVED",
+        "createdAt": "2026-10-14T22:22:35.541Z",
+        "imageDigest": "sha256:1e473a1c51dd5f70d2a42e74c4b56046e4b144d3dd8b5dd3ad31d61daf4e7f02",
+        "message": "Controlled G4 fixes d31e130"
+      }
+    ],
+    "seo-health-monitor": [
+      {
+        "id": "b921c2dc-3e09-4386-8605-209ece6febb1",
+        "status": "SUCCESS",
+        "createdAt": "2026-10-14T16:15:51.048Z",
+        "imageDigest": "sha256:46a99985a198bfb86c7c550d576ca6fbb3b4705cb7b1d4d7103f8b63eb02c340",
+        "message": null
+      },
+      {
+        "id": "5c06d7ea-8c25-4dc8-bc05-b7a72fb1f766",
+        "status": "REMOVED",
+        "createdAt": "2026-10-14T16:10:11.849Z",
+        "imageDigest": "sha256:46a99985a198bfb86c7c550d576ca6fbb3b4705cb7b1d4d7103f8b63eb02c340",
+        "message": null
+      }
+    ],
+    "workerEvents": [
+      {
+        "timestamp": "2026-10-15T05:43:03.535077778Z",
+        "message": "[beta-worker] worker-9c21b6b6-127e-4b16-917e-58fab0e74ea8 alive, running=0"
+      },
+      {
+        "timestamp": "2026-10-15T05:44:03.555080406Z",
+        "message": "[beta-worker] worker-9c21b6b6-127e-4b16-917e-58fab0e74ea8 alive, running=0"
+      },
+      {
+        "timestamp": "2026-10-15T05:45:03.708325073Z",
+        "message": "[beta-worker] worker-9c21b6b6-127e-4b16-917e-58fab0e74ea8 alive, running=0"
+      },
+      {
+        "timestamp": "2026-10-15T05:46:03.780222896Z",
+        "message": "[beta-worker] worker-9c21b6b6-127e-4b16-917e-58fab0e74ea8 alive, running=0"
+      },
+      {
+        "timestamp": "2026-10-15T05:47:03.809279886Z",
+        "message": "[beta-worker] worker-9c21b6b6-127e-4b16-917e-58fab0e74ea8 alive, running=0"
+      },
+      {
+        "timestamp": "2026-10-15T05:48:03.852248214Z",
+        "message": "[beta-worker] worker-9c21b6b6-127e-4b16-917e-58fab0e74ea8 alive, running=0"
+      },
+      {
+        "timestamp": "2026-10-15T05:49:03.894343599Z",
+        "message": "[beta-worker] worker-9c21b6b6-127e-4b16-917e-58fab0e74ea8 alive, running=0"
+      },
+      {
+        "timestamp": "2026-10-15T05:50:03.954817541Z",
+        "message": "[beta-worker] worker-9c21b6b6-127e-4b16-917e-58fab0e74ea8 alive, running=0"
+      }
+    ],
+    "workerPollFailureObserved": false,
+    "workerAliveAfterFailure": true,
+    "betaHealth": "200",
+    "phase1Health": "200",
+    "checkedAt": "2026-10-15T05:50:13.692148+00:00"
+  },
+  "databaseRecovery": {
+    "seo-beta-web": [
+      {
+        "id": "b83ab02c-7915-4f98-809d-b1ef8dc73c8a",
+        "status": "SUCCESS",
+        "createdAt": "2026-10-14T22:22:33.048Z",
+        "imageDigest": "sha256:d274d9beff49eec30e995794f7133b43d4a67556c411cd7f92181beeeeaa87df",
+        "message": "Controlled G4 fixes d31e130"
+      },
+      {
+        "id": "4c49f3db-58cc-45f9-b519-9bfc93b4e870",
+        "status": "REMOVED",
+        "createdAt": "2026-10-14T22:16:02.248Z",
+        "imageDigest": "sha256:39ffdfab98beb61dec6350386d8f46f2491c73c579114697185c5079a8e7519f",
+        "message": "Controlled G4 baseline 0d181a3"
+      }
+    ],
+    "seo-beta-worker": [
+      {
+        "id": "86f20b68-1a42-4a4d-93c3-482b4c044e25",
+        "status": "SUCCESS",
+        "createdAt": "2026-10-14T22:22:35.541Z",
+        "imageDigest": "sha256:1e473a1c51dd5f70d2a42e74c4b56046e4b144d3dd8b5dd3ad31d61daf4e7f02",
+        "message": "Controlled G4 fixes d31e130"
+      },
+      {
+        "id": "f81d0ce7-8c2f-4a65-a42f-a5bc05bf3eb7",
+        "status": "REMOVED",
+        "createdAt": "2026-10-14T22:15:59.749Z",
+        "imageDigest": "sha256:2cc60ad5c4ddf5679df3469230d1333e0b00de6e190ea2fecb3e4de5ec96d375",
+        "message": "Controlled G4 baseline 0d181a3"
+      }
+    ],
+    "seo-health-monitor": [
+      {
+        "id": "b921c2dc-3e09-4386-8605-209ece6febb1",
+        "status": "SUCCESS",
+        "createdAt": "2026-10-14T16:15:51.048Z",
+        "imageDigest": "sha256:46a99985a198bfb86c7c550d576ca6fbb3b4705cb7b1d4d7103f8b63eb02c340",
+        "message": null
+      },
+      {
+        "id": "5c06d7ea-8c25-4dc8-bc05-b7a72fb1f766",
+        "status": "REMOVED",
+        "createdAt": "2026-10-14T16:10:11.849Z",
+        "imageDigest": "sha256:46a99985a198bfb86c7c550d576ca6fbb3b4705cb7b1d4d7103f8b63eb02c340",
+        "message": null
+      }
+    ],
+    "workerEvents": [
+      {
+        "timestamp": "2026-10-14T22:25:42.574039492Z",
+        "message": "[beta-worker] worker-918da31e-eb05-4142-9190-4d7b9564f990 started"
+      },
+      {
+        "timestamp": "2026-10-14T22:26:42.333695892Z",
+        "message": "[beta-worker] worker-918da31e-eb05-4142-9190-4d7b9564f990 alive, running=0"
+      },
+      {
+        "timestamp": "2026-10-14T22:27:12.317807580Z",
+        "message": "[beta-worker] worker-918da31e-eb05-4142-9190-4d7b9564f990 poll failed; retrying"
+      },
+      {
+        "timestamp": "2026-10-14T22:27:42.320322077Z",
+        "message": "[beta-worker] worker-918da31e-eb05-4142-9190-4d7b9564f990 alive, running=0"
+      }
+    ],
+    "workerPollFailureObserved": true,
+    "workerAliveAfterFailure": true,
+    "betaHealth": "200",
+    "phase1Health": "200",
+    "checkedAt": "2026-10-14T22:28:10.508144+00:00"
+  },
+  "cleanup": {
+    "accounts": [
+      {
+        "account": "A",
+        "status": "active",
+        "websiteLimitOverride": null,
+        "auditLimitOverride": null,
+        "pageSpeedLimitOverride": null,
+        "websites": 1,
+        "audits": 6,
+        "active_jobs": 0,
+        "active_sessions": 0,
+        "administrators": 0
+      },
+      {
+        "account": "B",
+        "status": "active",
+        "websiteLimitOverride": null,
+        "auditLimitOverride": null,
+        "pageSpeedLimitOverride": null,
+        "websites": 1,
+        "audits": 4,
+        "active_jobs": 0,
+        "active_sessions": 0,
+        "administrators": 0
+      }
+    ],
+    "totals": {
+      "users": 3,
+      "administrators": 1,
+      "invitations": 3,
+      "consumed_invitations": 3,
+      "completed": 7,
+      "cancelled": 2,
+      "failed": 1,
+      "pagespeed_units": 8,
+      "held_test_table_locks": 0
+    },
+    "gates": {
+      "invitationsEnabled": "true",
+      "registration": "invite-only",
+      "allowlistExact": true,
+      "phase1BetaVariableCount": 0
+    },
+    "allFinalInvariantsPassed": true
+  }
+}

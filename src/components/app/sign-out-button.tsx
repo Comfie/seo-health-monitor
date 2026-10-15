@@ -3,11 +3,13 @@
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 
-export function SignOutButton() {
+export function SignOutButton({ beta = false }: { beta?: boolean }) {
   const router = useRouter();
   const signOut = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.replace("/login");
+    // Beta sessions are revoked server-side by the auth library, not just cleared.
+    if (beta) await fetch("/api/beta/auth/sign-out", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" });
+    else await fetch("/api/auth/logout", { method: "POST" });
+    router.replace(beta ? "/beta/login" : "/login");
     router.refresh();
   };
   return (
