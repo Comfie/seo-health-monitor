@@ -10,7 +10,9 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
 import { BRAND_ICON as Brand, NAV_VARIANTS, type NavVariant } from "./nav";
 import { BrandFooter } from "./brand-footer";
 
-function isActive(pathname: string, href: string) {
+function isActive(pathname: string, href: string, destinations: string[]) {
+  // Only the most specific navigation destination owns a nested page.
+  if (destinations.some(other => other !== href && other.startsWith(`${href}/`) && (pathname === other || pathname.startsWith(`${other}/`)))) return false;
   if (href === "/" || href === "/beta") return pathname === href;
   if (href === "/audits") return pathname === "/audits" || (pathname.startsWith("/audits/") && pathname !== "/audits/new");
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -19,6 +21,7 @@ function isActive(pathname: string, href: string) {
 function NavLinks({ variant, onNavigate }: { variant: NavVariant; onNavigate?: () => void }) {
   const pathname = usePathname();
   const params = useSearchParams();
+  const destinations = NAV_VARIANTS[variant].groups.flatMap(group => group.items.map(item => item.href));
   const audit = params.get("audit") ?? /^\/audits\/(\d+)/.exec(pathname)?.[1] ?? null;
   return (
     <nav aria-label="Main" className="flex flex-col gap-6">
@@ -27,7 +30,7 @@ function NavLinks({ variant, onNavigate }: { variant: NavVariant; onNavigate?: (
           <p className="px-3 pb-1.5 text-xs font-medium text-sidebar-foreground/60">{group.label}</p>
           <ul className="flex flex-col gap-0.5">
             {group.items.map((item) => {
-              const active = isActive(pathname, item.href);
+              const active = isActive(pathname, item.href, destinations);
               const href = item.auditScoped && audit ? `${item.href}?audit=${audit}` : item.href;
               return (
                 <li key={item.href}>

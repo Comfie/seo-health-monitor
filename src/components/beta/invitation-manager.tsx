@@ -51,7 +51,7 @@ export function CreateInvitationForm({ enabled }: { enabled: boolean }) {
           Send invitation
         </Button>
       </form>
-      {!enabled && <FormMessage tone="info">New invitations are disabled. Set PHASE2_INVITATIONS_ENABLED=true to allow them.</FormMessage>}
+      {!enabled && <FormMessage tone="info">New invitations are disabled for this workspace. Existing accounts can still sign in.</FormMessage>}
       {error && <FormMessage>{error}</FormMessage>}
       {issued && (
         <div className="rounded-md border border-primary/30 bg-accent p-3 text-sm text-accent-foreground">

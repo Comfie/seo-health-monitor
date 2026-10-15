@@ -6,7 +6,7 @@ export function BetaNotice() {
     <div className="mb-6 flex gap-3 rounded-lg border border-primary/30 bg-accent px-4 py-3 text-sm text-accent-foreground">
       <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
       <p>
-        Private beta: add your websites, run SEO audits, compare scans, download reports and generate Fix with AI instructions. Google Search Console is optional and awaiting live verification. PageSpeed measurements may be unavailable while API setup is pending. Everything is stored privately for your account.
+        Your workspace is private. Connect Search Console for Google search and indexing insights, and run audits for on-site findings and mobile and desktop PageSpeed measurements. Provider availability and your account allowances apply.
       </p>
     </div>
   );
