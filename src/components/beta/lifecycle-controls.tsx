@@ -37,6 +37,6 @@ export function LifecycleControls({isAdmin}: {isAdmin: boolean}) {
       <Button className="mt-3" variant="destructive" disabled={pending || !password || confirmation!=='DELETE MY ACCOUNT'} onClick={()=>void run('delete')}>Permanently delete my account</Button></>}
     </div>
     <p role="status" className="text-sm">{message}</p>
-    <div className="flex flex-wrap gap-4 text-sm"><Link className="underline" href="/beta/privacy">Draft Privacy Policy</Link><Link className="underline" href="/beta/terms">Draft Terms of Use</Link><Link className="underline" href="/beta/data-use">Crawling and Google data</Link></div>
+    <div className="flex flex-wrap gap-4 text-sm"><Link className="underline" href="/beta/privacy">Privacy Policy</Link><Link className="underline" href="/beta/terms">Terms of Use</Link><Link className="underline" href="/beta/data-use">Crawling and data use</Link></div>
   </div>;
 }

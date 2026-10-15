@@ -44,7 +44,7 @@ Variables are set per service in Railway. Both services need the shared database
 | `PHASE2_PAGESPEED_PAGES_PER_AUDIT=3` | Pages tested per audit (each tested on mobile and desktop) |
 | `PHASE2_LIMIT_*`, `PHASE2_GLOBAL_*` | Optional limit overrides. Defaults are in `src/lib/saas/limits.ts` and summarised in [STATUS.md](STATUS.md#limits-per-tester-account-code-defaults). |
 | `PHASE2_WORKER_CONCURRENCY` (worker) | Jobs per worker process (1) |
-| `PHASE2_PRIVACY_CONTACT_EMAIL` | Contact shown on the privacy pages (**not set yet**) |
+| `PHASE2_PRIVACY_CONTACT_EMAIL` | Contact shown on the privacy, terms and data-use pages (`comfynyatsine@gmail.com`) |
 | `ANTHROPIC_API_KEY`, `AI_MODEL` | Optional AI consultant (off) |
 
 Startup refuses unsafe combinations, for example open registration, a non-HTTPS origin, reused secrets, or `AUTH_DISABLED`.

@@ -57,8 +57,8 @@ Each provider may process data outside South Africa.
 | Auth events, invitations and Search Console snapshots | 90 days |
 
 **POPIA (South Africa):** before a wider launch the owner still needs to:
-- name the responsible party and information officer, and set `PHASE2_PRIVACY_CONTACT_EMAIL`;
-- finalise the `/beta/privacy`, `/beta/terms` and `/beta/data-use` pages, which are drafts and still contain notes addressed to the operator;
+- confirm the information officer (currently the operator, Comfort Nyatsine, contact comfynyatsine@gmail.com) and register them with the Information Regulator if required;
+- have the `/beta/privacy`, `/beta/terms` and `/beta/data-use` pages reviewed by a lawyer. They were rewritten as plain-language policies on 15 October 2026 but haven't been legally reviewed;
 - confirm the lawful basis, retention periods and cross-border transfer safeguards for each provider (Act sections 13–14, 18–25 and 72).
 
 For a security compromise, follow the [Information Regulator's current process](https://inforegulator.org.za/popia/).
