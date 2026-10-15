@@ -1,0 +1,16 @@
+{
+  "measurements": [
+    {
+      "strategy": "mobile",
+      "status": "ok",
+      "performanceScore": 100,
+      "errorCode": null
+    },
+    {
+      "strategy": "desktop",
+      "status": "ok",
+      "performanceScore": 100,
+      "errorCode": null
+    }
+  ]
+}

@@ -1,4 +1,3 @@
-
 > seo-health-monitor@0.1.0 build
 > next build
 
@@ -13,9 +12,9 @@
   Finished TypeScript in 5.0s ...
   Collecting page data using 7 workers ...
   Generating static pages using 7 workers (0/60) ...
-  Generating static pages using 7 workers (15/60) 
-  Generating static pages using 7 workers (30/60) 
-  Generating static pages using 7 workers (45/60) 
+  Generating static pages using 7 workers (15/60)
+  Generating static pages using 7 workers (30/60)
+  Generating static pages using 7 workers (45/60)
 ✓ Generating static pages using 7 workers (60/60) in 468ms
   Finalizing page optimization ...
 
@@ -111,4 +110,3 @@ Route (app)
 ○  (Static)             prerendered as static content
 ◐  (Partial Prerender)  prerendered as static HTML with dynamic server-streamed content
 ƒ  (Dynamic)            server-rendered on demand
-

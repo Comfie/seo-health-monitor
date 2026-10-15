@@ -1,0 +1,195 @@
+{
+  "checkedAt": "2026-10-15T10:09:11.728598+00:00",
+  "sourceRevision": "c1596d1cf5ad373396405c6647826d5793db538c",
+  "checks": [
+    {
+      "name": "Unified PostgreSQL readiness via original health URL",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "Original root goes to unified account dashboard",
+      "passed": true,
+      "status": 307
+    },
+    {
+      "name": "Anonymous denied /api/beta/admin/accounts",
+      "passed": true,
+      "status": 401
+    },
+    {
+      "name": "Anonymous denied /api/beta/admin/operations",
+      "passed": true,
+      "status": 401
+    },
+    {
+      "name": "Anonymous denied /api/beta/account/export",
+      "passed": true,
+      "status": 401
+    },
+    {
+      "name": "Anonymous denied /api/audits",
+      "passed": true,
+      "status": 401
+    },
+    {
+      "name": "Existing verified administrator session preserved",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "No invitations enabled",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "Public sign-up remains blocked",
+      "passed": true,
+      "status": 404
+    },
+    {
+      "name": "Disposable account real login and secure HttpOnly SameSite cookie",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "Ordinary customer cannot administer",
+      "passed": true,
+      "status": 404
+    },
+    {
+      "name": "Cross-origin mutation blocked",
+      "passed": true,
+      "status": 403
+    },
+    {
+      "name": "Missing-origin mutation blocked",
+      "passed": true,
+      "status": 403
+    },
+    {
+      "name": "Account export requires current password",
+      "passed": true,
+      "status": 403
+    },
+    {
+      "name": "Owned private JSON account export",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "Create tenant website",
+      "passed": true,
+      "status": 201
+    },
+    {
+      "name": "Existing OAuth client configured without fabricated connection",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "Connect uses existing client, PKCE and preserved callback path",
+      "passed": true,
+      "status": 303
+    },
+    {
+      "name": "Preserved callback rejects foreign OAuth state",
+      "passed": true,
+      "status": 303
+    },
+    {
+      "name": "PostgreSQL audit admission",
+      "passed": true,
+      "status": 202
+    },
+    {
+      "name": "Distributed worker completes a real crawl",
+      "passed": true,
+      "status": "completed"
+    },
+    {
+      "name": "Legacy report URL exports tenant json",
+      "passed": true,
+      "status": 200,
+      "bytes": 58030
+    },
+    {
+      "name": "Legacy report URL exports tenant csv",
+      "passed": true,
+      "status": 200,
+      "bytes": 16732
+    },
+    {
+      "name": "Legacy report URL exports tenant md",
+      "passed": true,
+      "status": 200,
+      "bytes": 21784
+    },
+    {
+      "name": "Legacy report URL exports tenant pdf",
+      "passed": true,
+      "status": 200,
+      "bytes": 27896
+    },
+    {
+      "name": "Fix with AI instructions available",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "Administrator has no implicit access to customer audit",
+      "passed": true,
+      "status": 404
+    },
+    {
+      "name": "Administrator bounded quota override",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "Website quota enforced",
+      "passed": true,
+      "status": 409
+    },
+    {
+      "name": "Suspend only disposable account",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "Suspension revokes existing sessions",
+      "passed": true,
+      "status": 401
+    },
+    {
+      "name": "Reactivate disposable account",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "Disposable account real login and secure HttpOnly SameSite cookie",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "Permanent deletion of disposable account only",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "Deleted account session cannot access resources",
+      "passed": true,
+      "status": 401
+    },
+    {
+      "name": "Protected monitoring and fresh worker heartbeat",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "Owner remains active and disposable identity removed",
+      "passed": true,
+      "status": 200
+    }
+  ]
+}
